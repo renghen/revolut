@@ -7,17 +7,18 @@ import org.multiverse.api.references.TxnLong
 class NotEnoughMoneyException : Exception("Not enough money")
 
 
-class Account private constructor (accountNumber: String, initialBalance: Double) : IAccount {
+class Account private constructor (accountNumberParam: String, initialBalance: Double,bankParam :Bank) : IAccount {
 
     companion object{
           fun createAccount(amount:Double,bank :Bank) : Account{
-              return Account(bank.generateAccountNumber(),amount)
+              return Account(bank.generateAccountNumber(),amount,bank)
           }
     }
 
-    private val accountNumber = accountNumber
+    val accountNumber = accountNumberParam
     private val lastUpdate: TxnLong = StmUtils.newTxnLong(System.currentTimeMillis())
     private val balance: TxnDouble = StmUtils.newTxnDouble(initialBalance)
+    val bank : Bank = bankParam
 
     @Throws(IllegalArgumentException::class)
     override fun addMoney(amount: Double): Double {

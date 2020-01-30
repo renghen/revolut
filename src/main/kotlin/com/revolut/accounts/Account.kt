@@ -10,8 +10,8 @@ class NotEnoughMoneyException : Exception("Not enough money")
 class Account private constructor (accountNumber: String, initialBalance: Double) : IAccount {
 
     companion object{
-          fun createAccount(amount:Double) : Account{
-              return Account(Bank.generateAccountNumber(),amount)
+          fun createAccount(amount:Double,bank :Bank) : Account{
+              return Account(bank.generateAccountNumber(),amount)
           }
     }
 

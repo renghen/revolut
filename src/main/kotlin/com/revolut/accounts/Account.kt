@@ -27,22 +27,18 @@ class Account(accountNumber: String, initialBalance: Double) {
 
     fun removeMoney(amount: Double) : Double{
         if (amount < 0) {
-            throw IllegalArgumentException("Wrong amount");
+            throw IllegalArgumentException("Wrong amount")
         }
         StmUtils.atomic(Runnable {
+            val currentBalance = balance.get()
+            if (currentBalance < amount){
+                throw IllegalArgumentException("Not enough money")
+            }
             balance.atomicIncrementAndGet(-1*amount)
             lastUpdate.set(System.currentTimeMillis())
         })
         return balance.atomicGet()
     }
-
-//    fun adjustBy(amount: Int, date: Long) {
-//        StmUtils.atomic(Runnable {
-//            balance.increment(amount)
-//            lastUpdate.set(date)
-//            require(balance.get() > 0) { "Not enough money" }
-//        })
-//    }
 
 
 }

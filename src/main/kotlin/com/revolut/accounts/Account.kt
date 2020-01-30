@@ -11,7 +11,7 @@ class Account private constructor (accountNumber: String, initialBalance: Double
 
     companion object{
           fun createAccount(amount:Double) : Account{
-              return Account("",amount)
+              return Account(Bank.generateAccountNumber(),amount)
           }
     }
 
@@ -22,7 +22,7 @@ class Account private constructor (accountNumber: String, initialBalance: Double
     @Throws(IllegalArgumentException::class)
     fun addMoney(amount: Double): Double {
         if (amount < 0) {
-            throw IllegalArgumentException("Wrong amount");
+
         }
 
         StmUtils.atomic(Runnable {
@@ -60,11 +60,8 @@ class Account private constructor (accountNumber: String, initialBalance: Double
 
     fun transferTo(other: Account, amount: Double) {
         StmUtils.atomic(Runnable {
-            val date = System.currentTimeMillis()
             removeMoney(amount)
             other.addMoney(amount)
         })
     }
-
-
 }

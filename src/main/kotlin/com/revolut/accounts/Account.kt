@@ -7,7 +7,7 @@ import org.multiverse.api.references.TxnLong
 class NotEnoughMoneyException : Exception("Not enough money")
 
 
-class Account private constructor (accountNumber: String, initialBalance: Double) {
+class Account private constructor (accountNumber: String, initialBalance: Double) : IAccount {
 
     companion object{
           fun createAccount(amount:Double) : Account{
@@ -20,7 +20,7 @@ class Account private constructor (accountNumber: String, initialBalance: Double
     private val balance: TxnDouble = StmUtils.newTxnDouble(initialBalance)
 
     @Throws(IllegalArgumentException::class)
-    fun addMoney(amount: Double): Double {
+    override fun addMoney(amount: Double): Double {
         if (amount < 0) {
 
         }
@@ -33,12 +33,12 @@ class Account private constructor (accountNumber: String, initialBalance: Double
     }
 
     @Throws(IllegalArgumentException::class)
-    operator fun plus(amount: Double): Double {
+    override operator fun plus(amount: Double): Double {
         return addMoney(amount)
     }
 
     @Throws(IllegalArgumentException::class, NotEnoughMoneyException::class)
-    fun removeMoney(amount: Double): Double {
+    override fun removeMoney(amount: Double): Double {
         if (amount < 0) {
             throw IllegalArgumentException("Wrong amount")
         }
@@ -54,11 +54,11 @@ class Account private constructor (accountNumber: String, initialBalance: Double
     }
 
     @Throws(IllegalArgumentException::class, NotEnoughMoneyException::class)
-    operator fun minus(amount: Double): Double {
+    override operator fun minus(amount: Double): Double {
         return removeMoney(amount)
     }
 
-    fun transferTo(other: Account, amount: Double) {
+    override fun transferTo(other: Account, amount: Double) {
         StmUtils.atomic(Runnable {
             removeMoney(amount)
             other.addMoney(amount)

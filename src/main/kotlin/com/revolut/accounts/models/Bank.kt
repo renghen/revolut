@@ -28,4 +28,12 @@ class Bank constructor(val name: String) {
         accountsMap[acc.accountNumber] = acc
     }
 
+    fun getAccount(accountNumber :String) : Account?{
+        return accountsMap[accountNumber]
+    }
+
+    operator fun get(accountNumber: String) : Account?{
+        return accountsMap[accountNumber]
+    }
+
 }

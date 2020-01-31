@@ -9,6 +9,22 @@ import kotlin.test.*
 
 class BankTest {
 
+    companion object{
+        fun `concurrent creation of N Accounts`(n: Int): Bank {
+            val bank = Bank("abc")
+            val executorService = Executors.newFixedThreadPool(10)
+            val futures = (1..n).map {
+                CompletableFuture.supplyAsync(Supplier {
+                    val accountDetails = AccountDetails(it.toString())
+                    bank.createAccount(accountDetails, 100.00)
+                }, executorService)
+            }.toTypedArray()
+
+            CompletableFuture.allOf(*futures).get()
+            return bank
+        }
+    }
+
     @Test
     fun `bank creation`() {
         val bank = Bank("abc")
@@ -25,19 +41,7 @@ class BankTest {
         assertEquals(900, bank.getAccountAvailable())
     }
 
-    fun `concurrent creation of N Accounts`(n: Int): Bank {
-        val bank = Bank("abc")
-        val executorService = Executors.newFixedThreadPool(10)
-        val futures = (1..n).map {
-            CompletableFuture.supplyAsync(Supplier {
-                val accountDetails = AccountDetails(it.toString())
-                bank.createAccount(accountDetails, 100.00)
-            }, executorService)
-        }.toTypedArray()
 
-        CompletableFuture.allOf(*futures).get()
-        return bank
-    }
 
     @Test
     fun `100 account creation concurrent`() {

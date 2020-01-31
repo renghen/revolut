@@ -1,5 +1,8 @@
 package com.revolut.accounts.models
 
+import com.revolut.accounts.models.Account
+import com.revolut.accounts.models.NotEnoughMoneyException
+
 interface IAccount {
     @Throws(IllegalArgumentException::class)
     fun addMoney(amount: Double): Double

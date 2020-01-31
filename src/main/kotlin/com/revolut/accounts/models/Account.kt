@@ -49,7 +49,7 @@ class Account private constructor(val accountNumber: String, val accountDetails:
             if (currentBalance < amount) {
                 throw NotEnoughMoneyException()
             }
-            balance.atomicIncrementAndGet(-1 * amount)
+            balance.atomicGetAndIncrement(-1 * amount)
             lastUpdate.set(System.currentTimeMillis())
         })
         return balance.atomicGet()

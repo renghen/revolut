@@ -79,7 +79,7 @@ class BankTest {
         try {
             bank.createAccount(AccountDetails("1001"), 100.0)
         } catch (e: Exception) {
-            println(e.cause)
+            println(e.cause?.cause)
         }
         assertEquals(1000, bank.getAccounts().size)
     }

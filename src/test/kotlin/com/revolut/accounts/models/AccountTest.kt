@@ -20,7 +20,7 @@ class AccountTest {
                 account.addMoney(-1.0)
             }
         } else {
-            assertNotNull(account, "account '0005' cannot be null")
+            assertNotNull<Account>(account, "account '0005' cannot be null")
         }
     }
 
@@ -32,7 +32,7 @@ class AccountTest {
                 account.removeMoney(-1.0)
             }
         } else {
-            assertNotNull(account, "account '0005' cannot be null")
+            assertNotNull<Account>(account, "account '0005' cannot be null")
         }
     }
 
@@ -48,26 +48,52 @@ class AccountTest {
                 }
             }
         } else {
-            assertNotNull(account, "account '0005' cannot be null")
+            assertNotNull<Account>(account, "account '0005' cannot be null")
         }
     }
 
     @Test
-    fun `increment account by 1 for 100 times concurrently`() {
+    fun `increment account by 1 for 1000 times concurrently`() {
         val executorService = Executors.newFixedThreadPool(10)
         val account = bank["0000"]
 
         if (account != null) {
-            val futures = (1..100).map {
+            val futures = (1..1000).map {
                 CompletableFuture.supplyAsync(Supplier {
-                    account.addMoney(1.0)
+                    account.addMoney(1.toDouble())
                 }, executorService)
             }.toTypedArray()
 
             CompletableFuture.allOf(*futures).get()
-            assertEquals(200.00, account.balance())
+            assertEquals(1100.00, account.balance())
         } else {
-            assertNotNull(account, "account '0000' cannot be null")
+            assertNotNull<Account>(account, "account '0000' cannot be null")
+        }
+    }
+
+    @Test
+    fun `transfers account for 1000 times concurrently`() {
+        val executorService = Executors.newFixedThreadPool(10)
+        val accountA = bank["0010"]
+        val accountB = bank["0011"]
+
+        if (accountA != null && accountB != null) {
+            val balanceA = accountA.balance()
+            val futures = (1..1000).map {
+                CompletableFuture.supplyAsync(Supplier {
+                    if (it % 2 == 0) {
+                        accountA.transferTo(accountB, 1.toDouble())
+                    } else {
+                        accountB.transferTo(accountA, 1.toDouble())
+                    }
+                }, executorService)
+            }.toTypedArray()
+
+            CompletableFuture.allOf(*futures).get()
+            assertEquals(balanceA, accountA.balance())
+        } else {
+            assertNotNull<Account>(accountA, "account '0010' cannot be null")
+            assertNotNull<Account>(accountB, "account '0011' cannot be null")
         }
     }
 

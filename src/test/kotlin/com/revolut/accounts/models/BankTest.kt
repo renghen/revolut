@@ -68,7 +68,7 @@ class BankTest {
                 `concurrent creation of N Accounts`(1001)
             } catch (e: Exception) {
                 println(e.cause)
-                throw e.cause?.cause ?: e
+                throw e.cause ?: e
             }
         }
     }

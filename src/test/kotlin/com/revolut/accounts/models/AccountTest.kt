@@ -80,6 +80,7 @@ class AccountTest {
 
         if (accountA != null && accountB != null) {
             val balanceA = accountA.balance()
+            val balanceB = accountB.balance()
             val futures = (1..1000).map {
                 CompletableFuture.supplyAsync(Supplier {
                     if (it % 2 == 0) {
@@ -92,6 +93,7 @@ class AccountTest {
 
             CompletableFuture.allOf(*futures).get()
             assertEquals(balanceA, accountA.balance())
+            assertEquals(balanceB, accountB.balance())
         } else {
             assertNotNull<Account>(accountA, "account '0010' cannot be null")
             assertNotNull<Account>(accountB, "account '0011' cannot be null")

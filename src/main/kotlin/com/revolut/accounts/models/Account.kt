@@ -67,4 +67,6 @@ class Account private constructor(val accountNumber: String, val accountDetails:
             other.addMoney(amount)
         })
     }
+
+    fun balance() : Double = balance.atomicGet()
 }

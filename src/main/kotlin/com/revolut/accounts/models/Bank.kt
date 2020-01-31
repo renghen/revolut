@@ -15,17 +15,23 @@ class Bank constructor(val name: String) {
     //utility to generate number
     @Throws(AccountFullException::class)
     fun generateAccountNumber(): String {
-        currentAccount.atomicIncrementAndGet(1)
-        if (currentAccount.atomicGet() >= maxAccount) {
-            throw AccountFullException()
-        }
-        return currentAccount.atomicGet().toString().padStart(4, '0')
+        var str= ""
+        StmUtils.atomic(Runnable {
+            val current = currentAccount.atomicIncrementAndGet(1)
+            if (current >= maxAccount) {
+                throw AccountFullException()
+            }
+            str = current.toString().padStart(4, '0')
+        })
+        return str
     }
 
     @Throws(AccountFullException::class)
     fun createAccount(accountDetails: AccountDetails, initialAmount: Double) {
-        val acc = Account.createAccount(accountDetails, initialAmount, this)
-        accountsMap[acc.accountNumber] = acc
+        StmUtils.atomic(Runnable {
+            val acc = Account.createAccount(accountDetails, initialAmount, this)
+            accountsMap[acc.accountNumber] = acc
+        })
     }
 
     fun getAccount(accountNumber :String) : Account?{

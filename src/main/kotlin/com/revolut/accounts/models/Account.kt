@@ -1,8 +1,8 @@
 package com.revolut.accounts.models
 
-import org.multiverse.api.StmUtils
-import org.multiverse.api.references.TxnDouble
-import org.multiverse.api.references.TxnLong
+import scala.concurrent.stm.*
+import scala.concurrent.stm.japi.STM
+import java.util.concurrent.Callable
 
 class NotEnoughMoneyException : Exception("Not enough money")
 
@@ -18,8 +18,7 @@ class Account private constructor(val accountNumber: String, val accountDetails:
         }
     }
 
-    private val lastUpdate: TxnLong = StmUtils.newTxnLong(System.currentTimeMillis())
-    private val balance: TxnDouble = StmUtils.newTxnDouble(initialBalance)
+    private val balance: Ref.View<Double> = STM.newRef(initialBalance) as Ref.View<Double>
 
     @Throws(IllegalArgumentException::class)
     override fun addMoney(amount: Double): Double {
@@ -27,11 +26,12 @@ class Account private constructor(val accountNumber: String, val accountDetails:
             throw IllegalArgumentException("Wrong amount")
         }
 
-        StmUtils.atomic(Runnable {
-            balance.atomicIncrementAndGet(amount)
-            lastUpdate.set(System.currentTimeMillis())
+        STM.atomic( Runnable{
+           balance.transform{
+               it + amount
+           }
         })
-        return balance.atomicGet()
+        return balance.get()
     }
 
     @Throws(IllegalArgumentException::class)
@@ -44,15 +44,17 @@ class Account private constructor(val accountNumber: String, val accountDetails:
         if (amount < 0) {
             throw IllegalArgumentException("Wrong amount")
         }
-        StmUtils.atomic(Runnable {
-            val currentBalance = balance.atomicGet()
+
+        return STM.atomic( Callable{
+            val currentBalance = balance.get()
             if (currentBalance < amount) {
                 throw NotEnoughMoneyException()
             }
-            balance.atomicGetAndIncrement(-1 * amount)
-            lastUpdate.set(System.currentTimeMillis())
+            balance.transform{
+                it - amount
+            }
+            balance.get()
         })
-        return balance.atomicGet()
     }
 
     @Throws(IllegalArgumentException::class, NotEnoughMoneyException::class)
@@ -61,11 +63,11 @@ class Account private constructor(val accountNumber: String, val accountDetails:
     }
 
     override fun transferTo(other: Account, amount: Double) {
-        StmUtils.atomic(Runnable {
+        STM.atomic(Runnable {
             removeMoney(amount)
             other.addMoney(amount)
         })
     }
 
-    override fun balance() : Double = balance.atomicGet()
+    override fun balance() : Double = balance.get()
 }

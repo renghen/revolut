@@ -53,9 +53,9 @@
         </dependency>
 
         <dependency>
-            <groupId>org.multiverse</groupId>
-            <artifactId>multiverse-core</artifactId>
-            <version>0.7.0</version>
+            <groupId>org.scala-stm</groupId>
+            <artifactId>scala-stm_2.13</artifactId>
+            <version>0.9.1</version>
         </dependency>
 
         <dependency>

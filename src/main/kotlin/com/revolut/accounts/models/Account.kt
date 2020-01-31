@@ -6,7 +6,7 @@ import java.util.concurrent.Callable
 
 class NotEnoughMoneyException : Exception("Not enough money")
 
-data class AccountDetails(val fullName : String)
+data class AccountDetails(val fullName: String)
 
 class Account private constructor(val accountNumber: String, val accountDetails: AccountDetails,
                                   initialBalance: Double, val bank: Bank) : IAccount {
@@ -26,10 +26,10 @@ class Account private constructor(val accountNumber: String, val accountDetails:
             throw IllegalArgumentException("Wrong amount")
         }
 
-        STM.atomic( Runnable{
-           balance.transform{
-               it + amount
-           }
+        STM.atomic(Runnable {
+            balance.transform {
+                it + amount
+            }
         })
         return balance.get()
     }
@@ -45,12 +45,12 @@ class Account private constructor(val accountNumber: String, val accountDetails:
             throw IllegalArgumentException("Wrong amount")
         }
 
-        return STM.atomic( Callable{
+        return STM.atomic(Callable {
             val currentBalance = balance.get()
             if (currentBalance < amount) {
                 throw NotEnoughMoneyException()
             }
-            balance.transform{
+            balance.transform {
                 it - amount
             }
             balance.get()
@@ -69,5 +69,5 @@ class Account private constructor(val accountNumber: String, val accountDetails:
         })
     }
 
-    override fun balance() : Double = balance.get()
+    override fun balance(): Double = balance.get()
 }

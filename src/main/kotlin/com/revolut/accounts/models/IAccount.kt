@@ -18,5 +18,5 @@ interface IAccount {
 
     fun transferTo(other: Account, amount: Double)
 
-    fun balance() : Double
+    fun balance(): Double
 }

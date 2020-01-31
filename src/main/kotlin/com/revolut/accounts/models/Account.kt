@@ -18,7 +18,7 @@ class Account private constructor(val accountNumber: String, val accountDetails:
         }
     }
 
-    private val balance: Ref.View<Double> = STM.newRef(initialBalance) as Ref.View<Double>
+    private val balance: Ref.View<Double> = STM.newRef<Double>(initialBalance)
 
     @Throws(IllegalArgumentException::class)
     override fun addMoney(amount: Double): Double {

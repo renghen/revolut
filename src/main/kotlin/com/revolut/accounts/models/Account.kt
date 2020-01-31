@@ -68,5 +68,5 @@ class Account private constructor(val accountNumber: String, val accountDetails:
         })
     }
 
-    fun balance() : Double = balance.atomicGet()
+    override fun balance() : Double = balance.atomicGet()
 }

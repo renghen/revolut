@@ -14,4 +14,6 @@ interface IAccount {
     operator fun minus(amount: Double): Double
 
     fun transferTo(other: Account, amount: Double)
+
+    fun balance() : Double
 }

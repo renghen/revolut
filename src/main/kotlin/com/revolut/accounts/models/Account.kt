@@ -1,29 +1,31 @@
-package com.revolut.accounts
+package com.revolut.accounts.models
 
 import org.multiverse.api.StmUtils
 import org.multiverse.api.references.TxnDouble
 import org.multiverse.api.references.TxnLong
+import java.net.Inet4Address
 
 class NotEnoughMoneyException : Exception("Not enough money")
 
+data class AccountDetails(val fullName : String)
 
-class Account private constructor (accountNumberParam: String, initialBalance: Double,bankParam :Bank) : IAccount {
+class Account private constructor(val accountNumber: String, val accountDetails: AccountDetails,
+                                  initialBalance: Double, val bank: Bank) : IAccount {
 
-    companion object{
-          fun createAccount(amount:Double,bank :Bank) : Account{
-              return Account(bank.generateAccountNumber(),amount,bank)
-          }
+    companion object {
+        @Throws(AccountFullException::class)
+        fun createAccount(accountDetails: AccountDetails, amount: Double, bank: Bank): Account {
+            return Account(bank.generateAccountNumber(), accountDetails, amount, bank)
+        }
     }
 
-    val accountNumber = accountNumberParam
     private val lastUpdate: TxnLong = StmUtils.newTxnLong(System.currentTimeMillis())
     private val balance: TxnDouble = StmUtils.newTxnDouble(initialBalance)
-    val bank : Bank = bankParam
 
     @Throws(IllegalArgumentException::class)
     override fun addMoney(amount: Double): Double {
         if (amount < 0) {
-
+            throw IllegalArgumentException("Wrong amount")
         }
 
         StmUtils.atomic(Runnable {

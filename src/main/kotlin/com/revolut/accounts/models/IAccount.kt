@@ -1,4 +1,4 @@
-package com.revolut.accounts
+package com.revolut.accounts.models
 
 interface IAccount {
     @Throws(IllegalArgumentException::class)

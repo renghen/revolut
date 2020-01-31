@@ -1,6 +1,5 @@
 package com.revolut.accounts.models
 
-import okhttp3.internal.wait
 import org.junit.Test
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executors
@@ -58,7 +57,6 @@ class BankTest {
             assertEquals(100.00, it.balance())
         }
     }
-
 
 }
 

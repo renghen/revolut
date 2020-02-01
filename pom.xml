@@ -5,7 +5,7 @@
 
     <groupId>com.mcb</groupId>
     <artifactId>revolut-accounts</artifactId>
-    <version>0.1</version>
+    <version>1.0</version>
     <name>Revolut account</name>
     <description>Revolut Account API</description>
     <packaging>jar</packaging>

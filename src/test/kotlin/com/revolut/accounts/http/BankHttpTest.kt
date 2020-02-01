@@ -6,10 +6,14 @@ import com.revolut.accounts.bank
 import com.revolut.accounts.bankServer
 import com.revolut.accounts.controllers.AccountNotFound
 import com.revolut.accounts.controllers.AccountSummary
+import com.revolut.accounts.controllers.BadRequest
 import com.revolut.accounts.controllers.mapper
 import org.http4k.client.OkHttp
+import org.http4k.core.Body
 import org.http4k.core.Method.GET
+import org.http4k.core.Method.POST
 import org.http4k.core.Request
+import org.http4k.core.Status.Companion.BAD_REQUEST
 import org.http4k.core.Status.Companion.NOT_FOUND
 import org.http4k.core.Status.Companion.OK
 import org.http4k.hamkrest.hasBody
@@ -70,5 +74,27 @@ class EndToEndTest {
         assertThat(response, hasStatus(NOT_FOUND).and(hasBody(AccountNotFound)))
     }
 
+    @Test
+    fun `endpoint bank account create account`() {
+        val accountInput =
+                """{
+                      "accountDetails" : {
+                        "fullName" : "newAccount"
+                      },
+                      "balance" : 100
+                    }""".trimIndent()
+        val request = Request(POST, "http://localhost:${server.port()}/bank/account").body(accountInput)
+        val response = client(request)
+        assertThat(response, hasStatus(OK).and(hasBody("{accountNumber:${bank.getAccounts().last().accountNumber}}")))
+    }
+
+    @Test
+    fun `endpoint bank account create account with error`() {
+        val accountInput = """{}"""
+        val request = Request(POST, "http://localhost:${server.port()}/bank/account").body(accountInput)
+        val response = client(request)
+        assertThat(response, hasStatus(BAD_REQUEST).and(hasBody(BadRequest)))
+    }
 
 }
+

@@ -12,32 +12,30 @@ import org.http4k.routing.bind
 import org.http4k.lens.Path
 import org.http4k.lens.string
 import org.http4k.routing.path
+import org.http4k.routing.routes
 
-fun bankApp(bank: Bank): List<RoutingHttpHandler> =
-        listOf(
-                "/" bind GET to { Response(OK) },
-                "/bank" bind GET to {
+fun bankApp(bank: Bank) =
+        "/bank" bind routes(
+                "/details" bind GET to {
                     Response(OK).body("{bank : ${bank.name}}")
                 },
-                "/bank/accountsLeft" bind GET to {
+                "/accountsLeft" bind GET to {
                     Response(OK).body("{accountsLeft : ${bank.getAccountAvailable()}}")
                 },
-                "/bank/accounts" bind GET to {
+                "/accounts" bind GET to {
                     //TODO json encoding
                     Response(OK).body("{bank : ${bank.name}}")
                 },
-                "/bank/accounts/{accountNumber}" bind GET to { req : Request ->
-
+                "/accounts/{accountNumber}" bind GET to { req: Request ->
                     val accountNumber = req.path("accountNumber")
 
-                    if(accountNumber == null){
+                    if (accountNumber == null) {
                         Response(BAD_REQUEST).body("""{message : "bad request"}""")
-                    }else{
+                    } else {
                         val account = bank[accountNumber]
                         if (account == null) {
                             Response(NOT_FOUND).body("""{message : "account number not found"}""")
-                        }
-                        else{
+                        } else {
                             //TODO json encoding
                             Response(OK).body("{bank : ${bank.name}}")
                         }

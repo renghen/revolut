@@ -146,9 +146,9 @@ class AccountHttpTest {
     //endregion
 
     //region transfer Test
-/*
+
     @Test
-    fun `endpoint account remove with not bad request`() {
+    fun `endpoint account transfer with not bad request`() {
         val accountInput = """{}"""
         val request = Request(PUT, "http://localhost:${server.port()}/account/removeMoney").body(accountInput)
         val response = client(request)
@@ -156,59 +156,93 @@ class AccountHttpTest {
     }
 
     @Test
-    fun `endpoint account remove with not found error`() {
+    fun `endpoint account transfer with not found error for accountA`() {
         val accountInput =
                 """{
-                      "accountNumber": "notfound", 
+                      "accountNumberA": "notfound",
+                      "accountNumberB": "00001",
                       "amount": 10.0
                    }
                 """
-        val request = Request(PUT, "http://localhost:${server.port()}/account/removeMoney").body(accountInput)
+        val request = Request(PUT, "http://localhost:${server.port()}/account/transfer").body(accountInput)
         val response = client(request)
         assertThat(response, hasStatus(BAD_REQUEST).and(hasBody(AccountNotFound)))
     }
 
     @Test
-    fun `endpoint account remove with wrong money error`() {
+    fun `endpoint account transfer with not found error for accountB`() {
         val accountInput =
                 """{
-                      "accountNumber": "$accountOfInterest", 
+                      "accountNumberA": "0000",
+                      "accountNumberB": "notfound",
+                      "amount": 10.0
+                   }
+                """
+        val request = Request(PUT, "http://localhost:${server.port()}/account/transfer").body(accountInput)
+        val response = client(request)
+        assertThat(response, hasStatus(BAD_REQUEST).and(hasBody(AccountNotFound)))
+    }
+
+    @Test
+    fun `endpoint account transfer with not found error for accountA & accountB`() {
+        val accountInput =
+                """{
+                      "accountNumberA": "notfound",
+                      "accountNumberB": "notfound",
+                      "amount": 10.0
+                   }
+                """
+        val request = Request(PUT, "http://localhost:${server.port()}/account/transfer").body(accountInput)
+        val response = client(request)
+        assertThat(response, hasStatus(BAD_REQUEST).and(hasBody(AccountNotFound)))
+    }
+
+    private val accountOfInterestA = "0000"
+    private val accountOfInterestB = "0001"
+
+    @Test
+    fun `endpoint account transfer with wrong money error`() {
+        val accountInput =
+                """{
+                      "accountNumberA": "$accountOfInterestA",
+                      "accountNumberB": "$accountOfInterestB", 
                       "amount": -10.0
                    }
                 """
-        val request = Request(PUT, "http://localhost:${server.port()}/account/removeMoney").body(accountInput)
+        val request = Request(PUT, "http://localhost:${server.port()}/account/transfer").body(accountInput)
         val response = client(request)
         assertThat(response, hasStatus(BAD_REQUEST).and(hasBody(MoneyParameter)))
     }
 
     @Test
-    fun `endpoint account remove with too much money error`() {
+    fun `endpoint account transfer with too much money error`() {
         val accountInput =
                 """{
-                      "accountNumber": "$accountOfInterest", 
+                      "accountNumberA": "$accountOfInterestA",
+                      "accountNumberB": "$accountOfInterestB", 
                       "amount": 200.0
                    }
                 """
-        val request = Request(PUT, "http://localhost:${server.port()}/account/removeMoney").body(accountInput)
+        val request = Request(PUT, "http://localhost:${server.port()}/account/transfer").body(accountInput)
         val response = client(request)
         assertThat(response, hasStatus(BAD_REQUEST).and(hasBody(NotEnoughMoney)))
     }
 
     @Test
-    fun `endpoint account remove with correct params`() {
+    fun `endpoint account transfer with correct params`() {
         val accountInput =
                 """{
-                      "accountNumber": "$accountOfInterest", 
+                      "accountNumberA": "$accountOfInterestA",
+                      "accountNumberB": "$accountOfInterestB", 
                       "amount": 10.0
                    }
                 """
-        val request = Request(PUT, "http://localhost:${server.port()}/account/removeMoney").body(accountInput)
+        val request = Request(PUT, "http://localhost:${server.port()}/account/transfer").body(accountInput)
         val response = client(request)
-        assertThat(response, hasStatus(OK).and(hasBody("""{balance: ${bank[accountOfInterest]!!.balance()}}""")))
+        val msg = transferMsg(bank[accountOfInterestA]!!.balance(),bank[accountOfInterestB]!!.balance())
+        assertThat(response, hasStatus(OK).and(hasBody(msg)))
     }
 
     //endregion
-*/
-
 }
 

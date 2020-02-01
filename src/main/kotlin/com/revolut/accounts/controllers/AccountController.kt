@@ -71,6 +71,14 @@ fun transferMoneyBetweenAccounts(req: Request, bank: Bank): Response {
     }
 }
 
+fun transferMsg(balanceA: Double, balanceB: Double) = """
+    {
+       "message" : "transfer successfull",
+       "balanceA" : $balanceA,
+       "balanceB" : $balanceB
+    }    
+""".trimIndent()
+
 fun removeMoneyFromAccount(req: Request, bank: Bank): Response {
     val accountBalanceManipulation = try {
         accountBalanceManipulationLens(req)
@@ -137,11 +145,3 @@ fun addMoneyToAccount(req: Request, bank: Bank): Response {
         }
     }
 }
-
-fun transferMsg(balanceA: Double, balanceB: Double) = """
-    {
-       "message" : "transfer successfull",
-       "balanceA" : $balanceA,
-       "balanceB" : $balanceB
-    }    
-""".trimIndent()

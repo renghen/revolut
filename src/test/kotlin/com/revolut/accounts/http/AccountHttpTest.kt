@@ -145,6 +145,70 @@ class AccountHttpTest {
 
     //endregion
 
+    //region transfer Test
+/*
+    @Test
+    fun `endpoint account remove with not bad request`() {
+        val accountInput = """{}"""
+        val request = Request(PUT, "http://localhost:${server.port()}/account/removeMoney").body(accountInput)
+        val response = client(request)
+        assertThat(response, hasStatus(BAD_REQUEST).and(hasBody(BadRequest)))
+    }
+
+    @Test
+    fun `endpoint account remove with not found error`() {
+        val accountInput =
+                """{
+                      "accountNumber": "notfound", 
+                      "amount": 10.0
+                   }
+                """
+        val request = Request(PUT, "http://localhost:${server.port()}/account/removeMoney").body(accountInput)
+        val response = client(request)
+        assertThat(response, hasStatus(BAD_REQUEST).and(hasBody(AccountNotFound)))
+    }
+
+    @Test
+    fun `endpoint account remove with wrong money error`() {
+        val accountInput =
+                """{
+                      "accountNumber": "$accountOfInterest", 
+                      "amount": -10.0
+                   }
+                """
+        val request = Request(PUT, "http://localhost:${server.port()}/account/removeMoney").body(accountInput)
+        val response = client(request)
+        assertThat(response, hasStatus(BAD_REQUEST).and(hasBody(MoneyParameter)))
+    }
+
+    @Test
+    fun `endpoint account remove with too much money error`() {
+        val accountInput =
+                """{
+                      "accountNumber": "$accountOfInterest", 
+                      "amount": 200.0
+                   }
+                """
+        val request = Request(PUT, "http://localhost:${server.port()}/account/removeMoney").body(accountInput)
+        val response = client(request)
+        assertThat(response, hasStatus(BAD_REQUEST).and(hasBody(NotEnoughMoney)))
+    }
+
+    @Test
+    fun `endpoint account remove with correct params`() {
+        val accountInput =
+                """{
+                      "accountNumber": "$accountOfInterest", 
+                      "amount": 10.0
+                   }
+                """
+        val request = Request(PUT, "http://localhost:${server.port()}/account/removeMoney").body(accountInput)
+        val response = client(request)
+        assertThat(response, hasStatus(OK).and(hasBody("""{balance: ${bank[accountOfInterest]!!.balance()}}""")))
+    }
+
+    //endregion
+*/
 
 }
 

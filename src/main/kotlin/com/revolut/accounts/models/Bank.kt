@@ -6,6 +6,10 @@ class AccountFullException : Exception("Account Full")
 
 class Bank constructor(val name: String) {
 
+    companion object{
+        fun formatIntForAcountNumber(l : Long) : String = l.toString().padStart(4, '0')
+    }
+
     private val maxAccount: Long = 1000
     private val accountsMap: ConcurrentHashMap<String, Account> = ConcurrentHashMap()
     private var currentAccount: Long = -1
@@ -18,7 +22,7 @@ class Bank constructor(val name: String) {
         if (currentAccount >= maxAccount) {
             throw AccountFullException()
         }
-        return currentAccount.toString().padStart(4, '0')
+        return formatIntForAcountNumber(currentAccount)
     }
 
     @Throws(AccountFullException::class)

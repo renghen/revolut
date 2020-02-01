@@ -1,5 +1,6 @@
 package com.revolut.accounts.models
 
+import com.revolut.accounts.models.Bank.Companion.formatIntForAcountNumber
 import org.junit.Test
 import java.lang.Exception
 import com.revolut.accounts.utils.BankUtils.`concurrent creation of N Accounts`
@@ -18,7 +19,8 @@ class BankTest {
         val bank = Bank("abc")
         for (i in 1..100) {
             val accountDetails = AccountDetails(i.toString())
-            bank.createAccount(accountDetails, 100.00)
+            val accountNumber = bank.createAccount(accountDetails, 100.00)
+            assertEquals(formatIntForAcountNumber(i.toLong() - 1), accountNumber)
         }
         assertEquals(900, bank.getAccountAvailable())
     }
@@ -35,7 +37,7 @@ class BankTest {
         val accounts = bank.getAccounts()
         var i = 0
         accounts.forEach {
-            val expectedAccountNumber = i.toString().padStart(4, '0')
+            val expectedAccountNumber = formatIntForAcountNumber(i.toLong())
             i += 1
             assertEquals(expectedAccountNumber, it.accountNumber)
             assertEquals(100.00, it.balance())

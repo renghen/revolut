@@ -71,6 +71,31 @@ class AccountTest {
         }
     }
 
+    @Test
+    fun `increment account by 1 and remove by 1 for 1000 times concurrently`() {
+        val executorService = Executors.newFixedThreadPool(10)
+        val account = bank["0002"]
+
+        if (account != null) {
+            account.addMoney(1000.toDouble()) // to prevent under flow exception
+            val futures = (1..1000).map {
+                CompletableFuture.supplyAsync(Supplier {
+                    if(it % 2 == 0) {
+                        account.addMoney(1.toDouble())
+                    }
+                    else{
+                        account.removeMoney(1.toDouble())
+                    }
+                }, executorService)
+            }.toTypedArray()
+
+            CompletableFuture.allOf(*futures).get()
+            assertEquals(1100.00, account.balance())
+        } else {
+            assertNotNull<Account>(account, "account '0002' cannot be null")
+        }
+    }
+
 
     @Test
     fun `transfers account for 1000 times concurrently`() {

@@ -23,9 +23,10 @@ class Bank constructor(val name: String) {
 
     @Throws(AccountFullException::class)
     @Synchronized
-    fun createAccount(accountDetails: AccountDetails, initialAmount: Double) {
+    fun createAccount(accountDetails: AccountDetails, initialAmount: Double) :String {
         val acc = Account.createAccount(accountDetails, initialAmount, this)
         accountsMap[acc.accountNumber] = acc
+        return acc.accountNumber
     }
 
     fun getAccount(accountNumber: String): Account? {

@@ -171,16 +171,16 @@ class AccountTest {
                         0 -> accountA.transferTo(accountB, 1.toDouble())
                         1 -> accountB.transferTo(accountA, 1.toDouble())
                         2 -> {
-                            val discard = accountA.addMoney(1.toDouble());println(discard)
+                            accountA.addMoney(1.toDouble());Unit
                         }
                         3 -> {
-                            val discard = accountB.addMoney(1.toDouble());println(discard)
+                            accountB.addMoney(1.toDouble());Unit
                         }
                         4 -> {
-                            val discard = accountA.removeMoney(1.toDouble());println(discard)
+                            accountA.removeMoney(1.toDouble());Unit
                         }
                         5 -> {
-                            val discard = accountB.removeMoney(1.toDouble());println(discard)
+                             accountB.removeMoney(1.toDouble());Unit
                         }
                     }
                 }, executorService)

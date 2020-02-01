@@ -62,6 +62,7 @@ class Account private constructor(val accountNumber: String, val accountDetails:
         return removeMoney(amount)
     }
 
+    @Throws(IllegalArgumentException::class, NotEnoughMoneyException::class)
     override fun transferTo(other: Account, amount: Double) {
         STM.atomic(Runnable {
             removeMoney(amount)

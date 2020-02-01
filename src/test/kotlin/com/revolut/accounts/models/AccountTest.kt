@@ -96,6 +96,36 @@ class AccountTest {
         }
     }
 
+    @Test
+    fun `transfers account between 2 acc but with unsufficient amount`() {
+        val accountA = bank["0010"]
+        val accountB = bank["0011"]
+
+        if (accountA != null && accountB != null) {
+            val balanceA = accountA.balance()
+            assertFailsWith(NotEnoughMoneyException::class) {
+                accountA.transferTo(accountB, balanceA + 1)
+            }
+        } else {
+            assertNotNull<Account>(accountA, "account '0010' cannot be null")
+            assertNotNull<Account>(accountB, "account '0011' cannot be null")
+        }
+    }
+
+    @Test
+    fun `transfers account between 2 acc but with wrong amount`() {
+        val accountA = bank["0010"]
+        val accountB = bank["0011"]
+
+        if (accountA != null && accountB != null) {
+            assertFailsWith(IllegalArgumentException::class) {
+                accountA.transferTo(accountB, -10.00)
+            }
+        } else {
+            assertNotNull<Account>(accountA, "account '0010' cannot be null")
+            assertNotNull<Account>(accountB, "account '0011' cannot be null")
+        }
+    }
 
     @Test
     fun `transfers account for 1000 times concurrently`() {
@@ -124,5 +154,6 @@ class AccountTest {
             assertNotNull<Account>(accountB, "account '0011' cannot be null")
         }
     }
+
 
 }

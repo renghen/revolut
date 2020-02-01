@@ -16,6 +16,7 @@ interface IAccount {
     @Throws(IllegalArgumentException::class, NotEnoughMoneyException::class)
     operator fun minus(amount: Double): Double
 
+    @Throws(IllegalArgumentException::class, NotEnoughMoneyException::class)
     fun transferTo(other: Account, amount: Double)
 
     fun balance(): Double

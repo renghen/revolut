@@ -80,10 +80,9 @@ class AccountTest {
             account.addMoney(1000.toDouble()) // to prevent under flow exception
             val futures = (1..1000).map {
                 CompletableFuture.supplyAsync(Supplier {
-                    if(it % 2 == 0) {
+                    if (it % 2 == 0) {
                         account.addMoney(1.toDouble())
-                    }
-                    else{
+                    } else {
                         account.removeMoney(1.toDouble())
                     }
                 }, executorService)
@@ -167,13 +166,21 @@ class AccountTest {
             val balanceB = accountB.balance()
             val futures = (1..6000).map {
                 CompletableFuture.supplyAsync(Supplier {
-                    when(it % 6){
+                    when (it % 6) {
                         0 -> accountA.transferTo(accountB, 1.toDouble())
                         1 -> accountB.transferTo(accountA, 1.toDouble())
-                        2 -> { val discard = accountA.addMoney(1.toDouble()) }
-                        3 -> { val discard = accountB.addMoney(1.toDouble()) }
-                        4 -> { val discard = accountA.removeMoney(1.toDouble())}
-                        5 -> { val discard = accountB.removeMoney(1.toDouble())}
+                        2 -> {
+                            val discard = accountA.addMoney(1.toDouble());println(discard)
+                        }
+                        3 -> {
+                            val discard = accountB.addMoney(1.toDouble());println(discard)
+                        }
+                        4 -> {
+                            val discard = accountA.removeMoney(1.toDouble());println(discard)
+                        }
+                        5 -> {
+                            val discard = accountB.removeMoney(1.toDouble());println(discard)
+                        }
                     }
                 }, executorService)
             }.toTypedArray()
@@ -194,14 +201,14 @@ class AccountTest {
         val accountB = bank["0013"]
         val accountC = bank["0014"]
 
-        if (accountA != null && accountB != null  && accountC != null) {
+        if (accountA != null && accountB != null && accountC != null) {
             val balanceA = accountA.balance()
             val balanceB = accountB.balance()
             val balanceC = accountC.balance()
             accountC.addMoney(2000.00)
             val futures = (1..4000).map {
                 CompletableFuture.supplyAsync(Supplier {
-                    when(it % 4){
+                    when (it % 4) {
                         0 -> accountA.transferTo(accountB, 1.toDouble())
                         1 -> accountB.transferTo(accountA, 1.toDouble())
                         2 -> accountC.transferTo(accountA, 1.toDouble())

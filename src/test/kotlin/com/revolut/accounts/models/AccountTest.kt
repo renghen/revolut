@@ -1,5 +1,6 @@
 package com.revolut.accounts.models
 
+import com.revolut.accounts.utils.BankUtils
 import org.junit.Test
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executors
@@ -9,7 +10,7 @@ import kotlin.test.*
 class AccountTest {
 
     companion object {
-        val bank = BankTest.`concurrent creation of N Accounts`(100)
+        val bank = BankUtils.`concurrent creation of N Accounts`(100)
     }
 
     @Test

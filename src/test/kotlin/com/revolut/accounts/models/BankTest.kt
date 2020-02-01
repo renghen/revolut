@@ -2,29 +2,10 @@ package com.revolut.accounts.models
 
 import org.junit.Test
 import java.lang.Exception
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.Executors
-import java.util.function.Supplier
+import com.revolut.accounts.utils.BankUtils.`concurrent creation of N Accounts`
 import kotlin.test.*
 
-
 class BankTest {
-
-    companion object {
-        fun `concurrent creation of N Accounts`(n: Int): Bank {
-            val bank = Bank("abc")
-            val executorService = Executors.newFixedThreadPool(10)
-            val futures = (1..n).map {
-                CompletableFuture.supplyAsync(Supplier {
-                    val accountDetails = AccountDetails(it.toString())
-                    bank.createAccount(accountDetails, 100.00)
-                }, executorService)
-            }.toTypedArray()
-
-            CompletableFuture.allOf(*futures).get()
-            return bank
-        }
-    }
 
     @Test
     fun `bank creation`() {

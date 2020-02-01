@@ -97,6 +97,7 @@
             <groupId>org.http4k</groupId>
             <artifactId>http4k-testing-hamkrest</artifactId>
             <version>${http4k.version}</version>
+            <scope>test</scope>
         </dependency>
 
     </dependencies>

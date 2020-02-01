@@ -21,9 +21,9 @@ import org.http4k.hamkrest.hasStatus
 import org.junit.*
 
 
-class EndToEndTest {
+class BankHttpTest {
     private val client = OkHttp()
-    private val server = bankServer(9000)
+    private val server = bankServer(9090)
 
     @Before
     fun setup() {

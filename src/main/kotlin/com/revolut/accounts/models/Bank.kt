@@ -4,10 +4,16 @@ import java.util.concurrent.ConcurrentHashMap
 
 class AccountFullException : Exception("Account Full")
 
+sealed abstract class InterBankFee
+data class PercentageFee(val number: Double) : InterBankFee()
+data class FixedFee(val number: Double) : InterBankFee()
+
+
 class Bank constructor(val name: String) {
 
     companion object{
         fun formatIntForAcountNumber(l : Long) : String = l.toString().padStart(4, '0')
+        val NoFee = FixedFee(0.0)
     }
 
     private val maxAccount: Long = 1000

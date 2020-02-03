@@ -7,6 +7,7 @@ import org.http4k.routing.RoutingHttpHandler
 import org.http4k.routing.bind
 import org.http4k.routing.routes
 import java.lang.Exception
+import java.util.concurrent.locks.ReentrantLock
 
 data class AccountBalanceManipulation(val accountNumber: String, val amount: Double)
 
@@ -66,7 +67,6 @@ fun transferMoneyBetweenAccounts(req: Request, bank: Bank): Response {
                     }
                 }
             }
-
         }
     }
 }

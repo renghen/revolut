@@ -4,7 +4,7 @@
   <groupId>com.mcb</groupId>
   <artifactId>revolut-accounts</artifactId>
   <name>Revolut account</name>
-  <version>0.1</version>
+  <version>1.0</version>
   <description>Revolut Account API</description>
   <build>
     <sourceDirectory>src/main/kotlin</sourceDirectory>

@@ -220,7 +220,7 @@ class AccountHttpTest {
         }
 
         @Test
-        fun `endpoint account transfer with too much money error`() {
+        fun `http endpoint account transfer with too much money error`() {
             val accountInput =
                     """{
                           "accountNumberA": "$accountOfInterestA",
@@ -290,7 +290,7 @@ class AccountHttpTest {
         }
 
     @Test
-    fun `transfers account between 2 accounts for 6000 times concurrently with add and remove added into the mix`() {
+    fun `http endpoint transfers account between 2 accounts for 6000 times concurrently with add and remove added into the mix`() {
         val executorService = Executors.newFixedThreadPool(10)
         val futures = (1..6000).map {
             CompletableFuture.supplyAsync(Supplier {
@@ -376,7 +376,7 @@ class AccountHttpTest {
                 """
 
     @Test
-    fun `transfers account between 3 accounts for 4000 times concurrently`() {
+    fun `http endpoint transfers account between 3 accounts for 4000 times concurrently`() {
         val executorService = Executors.newFixedThreadPool(10)
         val accountAdd2000ToE =
                 """{

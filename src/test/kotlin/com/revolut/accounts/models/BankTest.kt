@@ -1,7 +1,6 @@
 package com.revolut.accounts.models
 
 import com.revolut.accounts.models.Bank.Companion.formatIntForAcountNumber
-import org.junit.Test
 import java.lang.Exception
 import com.revolut.accounts.utils.BankUtils.`concurrent creation of N Accounts`
 import kotlin.test.*

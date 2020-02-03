@@ -19,18 +19,21 @@ import org.http4k.core.Status.Companion.OK
 import org.http4k.hamkrest.hasBody
 import org.http4k.hamkrest.hasStatus
 import org.junit.*
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 
 class BankHttpTest {
     private val client = OkHttp()
     private val server = bankServer(9090)
 
-    @Before
+    @BeforeEach
     fun setup() {
         server.start()
     }
 
-    @After
+    @AfterEach
     fun teardown() {
         server.stop()
     }

@@ -13,6 +13,9 @@ import org.http4k.core.Status.Companion.OK
 import org.http4k.hamkrest.hasBody
 import org.http4k.hamkrest.hasStatus
 import org.junit.*
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executors
 import java.util.function.Supplier
@@ -24,12 +27,12 @@ class AccountHttpTest {
     private val server = bankServer(9090)
     private val accountOfInterest = "0000"
 
-    @Before
+    @BeforeEach
     fun setup() {
         server.start()
     }
 
-    @After
+    @AfterEach
     fun teardown() {
         server.stop()
     }

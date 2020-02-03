@@ -1,7 +1,6 @@
 package com.revolut.accounts.models
 
 import com.revolut.accounts.utils.BankUtils
-import org.junit.Test
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executors
 import java.util.function.Supplier

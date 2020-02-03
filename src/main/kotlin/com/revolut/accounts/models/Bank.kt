@@ -7,6 +7,7 @@ class AccountFullException : Exception("Account Full")
 sealed class InterBankFee
 data class PercentageFee(val number: Double) : InterBankFee()
 data class FixedFee(val number: Double) : InterBankFee()
+
 data class OtherBankDetails(val bank : Bank, val fees : InterBankFee)
 
 class Bank constructor(val name: String) {
@@ -61,4 +62,9 @@ class Bank constructor(val name: String) {
         otherBanksFeeMap.putIfAbsent(bank.name,OtherBankDetails(bank,fee))
     }
 
+    @Synchronized
+    fun getForeignBankFee(bankName: String) : InterBankFee?{
+        return otherBanksFeeMap[bankName]?.fees
+    }
+    
 }

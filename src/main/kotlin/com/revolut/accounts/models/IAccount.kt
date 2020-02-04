@@ -19,5 +19,8 @@ interface IAccount {
     @Throws(IllegalArgumentException::class, NotEnoughMoneyException::class)
     fun transferTo(other: Account, amount: Double)
 
+    @Throws(IllegalArgumentException::class, NotEnoughMoneyException::class, TransferFeeDoesNotExistException::class)
+    fun transferToAccountInOtherBank(otherBank: String, otherAccountName: String, amount: Double)
+
     fun balance(): Double
 }

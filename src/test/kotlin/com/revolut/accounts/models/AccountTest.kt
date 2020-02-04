@@ -240,7 +240,7 @@ class AccountTest {
         val accountB = "0050"
         val balanceA = accountA.balance()
         val amountToTransfer = 9.0
-        val fee = BankUtils.calculateInterBankFee(bank.getForeignBankFee(otherBank.name)!!,amountToTransfer)
+        val fee = BankUtils.calculateInterBankFee(bank.getForeignBankFee(otherBank.name)!!, amountToTransfer)
 
         accountA.transferToAccountInOtherBank(otherBank.name, accountB, amountToTransfer)
         assertEquals(balanceA - (amountToTransfer + fee), accountA.balance())
@@ -252,10 +252,61 @@ class AccountTest {
         val accountB = "0050"
         val balanceA = accountA.balance()
         val amountToTransfer = 10.0
-        val fee = BankUtils.calculateInterBankFee(otherBank.getForeignBankFee(bank.name)!!,amountToTransfer)
+        val fee = BankUtils.calculateInterBankFee(otherBank.getForeignBankFee(bank.name)!!, amountToTransfer)
 
         accountA.transferToAccountInOtherBank(bank.name, accountB, amountToTransfer)
         assertEquals(balanceA - (amountToTransfer + fee), accountA.balance())
+    }
+
+    @Test
+    fun `transfers account between 2 different bank acc for 2000 times concurrently`() {
+        val executorService = Executors.newFixedThreadPool(10)
+        val accountA = bank["0051"]!!
+        val accountB = otherBank["0051"]!!
+
+        val balanceA = accountA + 1000.0
+        val balanceB = accountB + 1000.0
+        val futures = (1..2000).map {
+            CompletableFuture.supplyAsync(Supplier {
+                if (it % 2 == 0) {
+                    accountA.transferToAccountInOtherBank(otherBank.name, accountB.accountNumber, 10.toDouble())
+                } else {
+                    accountB.transferToAccountInOtherBank(bank.name, accountA.accountNumber, 10.toDouble())
+                }
+            }, executorService)
+        }.toTypedArray()
+
+        CompletableFuture.allOf(*futures).get()
+        assertEquals(balanceA - 1000, accountA.balance())
+        assertEquals(balanceB - 500, accountB.balance())
+    }
+
+    @Test
+    fun `transfers account between 2 accounts for 4000 times concurrently with add and remove added into the mix`() {
+        val executorService = Executors.newFixedThreadPool(10)
+        val accountA = bank["0052"]!!
+        val accountB = otherBank["0052"]!!
+
+        val balanceA = accountA.balance()
+        val balanceB = accountB.balance()
+        val futures = (1..4000).map {
+            CompletableFuture.supplyAsync(Supplier {
+                when (it % 4) {
+                    0 -> accountA.transferToAccountInOtherBank(otherBank.name, accountB.accountNumber, 10.toDouble())
+                    1 -> accountB.transferToAccountInOtherBank(bank.name, accountA.accountNumber, 10.toDouble())
+                    2 -> {
+                        accountA.addMoney(1.toDouble());Unit
+                    }
+                    3 -> {
+                        accountB.addMoney(0.5);Unit
+                    }
+                }
+            }, executorService)
+        }.toTypedArray()
+
+        CompletableFuture.allOf(*futures).get()
+        assertEquals(balanceA, accountA.balance())
+        assertEquals(balanceB, accountB.balance())
     }
 
 }

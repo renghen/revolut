@@ -107,8 +107,8 @@ fun bankApp(banks: ConcurrentHashMap<String, Bank>): RoutingHttpHandler =
 data class InterBankJson(val rateType: String, val value: Double)
 
 fun interBankRateToJson(interBankFee: InterBankFee): InterBankJson = when (interBankFee) {
-    is PercentageFee -> InterBankJson("percentage", interBankFee.number)
-    is FixedFee -> InterBankJson("Fix Fee", interBankFee.number)
+    is PercentageFee -> InterBankJson("percentage", interBankFee.amount)
+    is FixedFee -> InterBankJson("Fix Fee", interBankFee.amount)
 }
 
 private fun getInterBankRate(req: Request, bank: Bank): Response {

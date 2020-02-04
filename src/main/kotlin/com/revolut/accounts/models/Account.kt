@@ -5,6 +5,8 @@ import scala.concurrent.stm.japi.STM
 import java.util.concurrent.Callable
 
 class NotEnoughMoneyException : Exception("Not enough money")
+class TransferFeeDoesNotExistException : Exception("Transfer fee does not exist")
+class AccountNotFoundException : Exception("Account number not found")
 
 data class AccountDetails(val fullName: String)
 
@@ -67,6 +69,28 @@ class Account private constructor(val accountNumber: String, val accountDetails:
         STM.atomic(Runnable {
             removeMoney(amount)
             other.addMoney(amount)
+        })
+    }
+
+    @Throws(IllegalArgumentException::class, NotEnoughMoneyException::class, TransferFeeDoesNotExistException::class)
+    fun transferToAccountInOtherBank(otherBank: String, otherAccountName: String, amount: Double) {
+        STM.atomic(Runnable {
+            val transferFee = bank.getForeignBankFee(otherBank)
+            if (transferFee == null) {
+                throw TransferFeeDoesNotExistException()
+            } else {
+                val otherAccount = bank.getForeignAccount(otherBank, otherAccountName)
+                if (otherAccount == null) {
+                    throw AccountNotFoundException()
+                } else {
+                    val transferFeeAmount = when (transferFee) {
+                        is FixedFee -> transferFee.amount
+                        is PercentageFee -> (transferFee.amount * amount) / 100.0
+                    }
+                    removeMoney(amount + transferFeeAmount)
+                    otherAccount.addMoney(amount)
+                }
+            }
         })
     }
 

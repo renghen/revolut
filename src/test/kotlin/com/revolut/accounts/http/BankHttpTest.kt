@@ -37,7 +37,6 @@ class BankHttpTest {
     @Test
     fun `endpoint bank details bad bank name`() {
         val response = client(Request(GET, "http://localhost:${server.port()}/bank/$bankNotExist/details"))
-        val name = banks["ABC"]!!.name
         assertThat(response, hasStatus(BAD_REQUEST).and(hasBody(BankNotFound)))
     }
 
@@ -81,7 +80,6 @@ class BankHttpTest {
 
     @Test
     fun `endpoint bank account accountNumber Not found`() {
-        val bank = banks["ABC"]!!
         val accountNumber = "notFound"
         val response = client(Request(GET, "http://localhost:${server.port()}/bank/ABC/account/$accountNumber"))
         assertThat(response, hasStatus(NOT_FOUND).and(hasBody(AccountNotFound)))

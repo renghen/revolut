@@ -5,8 +5,8 @@ import java.util.concurrent.ConcurrentHashMap
 class AccountFullException : Exception("Account Full")
 
 sealed class InterBankFee
-data class PercentageFee(val number: Double) : InterBankFee()
-data class FixedFee(val number: Double) : InterBankFee()
+data class PercentageFee(val amount: Double) : InterBankFee()
+data class FixedFee(val amount: Double) : InterBankFee()
 
 data class OtherBankDetails(val bank : Bank, val fees : InterBankFee)
 
@@ -64,6 +64,10 @@ class Bank constructor(val name: String) {
 
     fun getForeignBankFee(bankName: String) : InterBankFee?{
         return otherBanksFeeMap[bankName]?.fees
+    }
+
+    fun getForeignAccount(otherBankName: String, accountNumber: String) : Account?{
+        return otherBanksFeeMap[otherBankName]?.bank?.getAccount(accountNumber)
     }
 
 }

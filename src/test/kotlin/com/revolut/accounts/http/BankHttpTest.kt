@@ -6,7 +6,6 @@ import com.revolut.accounts.Main.banks
 import com.revolut.accounts.Main.bankServer
 import com.revolut.accounts.controllers.*
 import org.http4k.client.OkHttp
-import org.http4k.core.Body
 import org.http4k.core.Method.GET
 import org.http4k.core.Method.POST
 import org.http4k.core.Request
@@ -15,7 +14,6 @@ import org.http4k.core.Status.Companion.NOT_FOUND
 import org.http4k.core.Status.Companion.OK
 import org.http4k.hamkrest.hasBody
 import org.http4k.hamkrest.hasStatus
-import org.junit.*
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -63,7 +61,7 @@ class BankHttpTest {
         val accounts = bank.getAccounts().map {
             AccountSummary(it.accountNumber, it.accountDetails, it.balance())
         }
-        val bankAccountSummary = BankAccountSummary(bank.name,accounts)
+        val bankAccountSummary = BankAccountSummary(bank.name, accounts)
         val serialized = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(bankAccountSummary)
         val response = client(Request(GET, "http://localhost:${server.port()}/bank/ABC/accountList"))
         assertThat(response, hasStatus(OK).and(hasBody(serialized)))
@@ -106,11 +104,42 @@ class BankHttpTest {
 
     @Test
     fun `endpoint bank account create account with error`() {
-        val bank = banks["ABC"]!!
         val accountInput = """{}"""
         val request = Request(POST, "http://localhost:${server.port()}/bank/ABC/account").body(accountInput)
         val response = client(request)
         assertThat(response, hasStatus(BAD_REQUEST).and(hasBody(BadRequest)))
+    }
+
+    @Test
+    fun `endpoint bank interBank fee does not exist`() {
+        val otherBank = "BankNoExist"
+        val request = Request(GET, "http://localhost:${server.port()}/bank/ABC/$otherBank/interbankRate")
+        val response = client(request)
+        assertThat(response, hasStatus(NOT_FOUND).and(hasBody(ForeignBankFeeNotFound)))
+    }
+
+    @Test
+    fun `endpoint bank interBank fee Fixed Fee`() {
+        val bank = banks["ABC"]!!
+        val otherBankName = "XYZ"
+        val request = Request(GET, "http://localhost:${server.port()}/bank/${bank.name}/$otherBankName/interbankRate")
+        val response = client(request)
+        val fee = bank.getForeignBankFee(otherBankName)!!
+        val interBankRateToJson = interBankRateToJson(fee)
+        val serialized = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(interBankRateToJson)
+        assertThat(response, hasStatus(OK).and(hasBody(serialized)))
+    }
+
+    @Test
+    fun `endpoint bank interBank fee Percentage Fee`() {
+        val bank = banks["XYZ"]!!
+        val otherBankName = "ABC"
+        val request = Request(GET, "http://localhost:${server.port()}/bank/${bank.name}/$otherBankName/interbankRate")
+        val response = client(request)
+        val fee = bank.getForeignBankFee(otherBankName)!!
+        val interBankRateToJson = interBankRateToJson(fee)
+        val serialized = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(interBankRateToJson)
+        assertThat(response, hasStatus(OK).and(hasBody(serialized)))
     }
 
 }

@@ -6,8 +6,7 @@ import com.fasterxml.jackson.core.JsonGenerator
 import com.fasterxml.jackson.databind.JsonSerializer
 import com.fasterxml.jackson.databind.SerializerProvider
 import com.fasterxml.jackson.databind.annotation.JsonSerialize
-import com.revolut.accounts.models.AccountDetails
-import com.revolut.accounts.models.Bank
+import com.revolut.accounts.models.*
 import org.http4k.core.Body
 import org.http4k.core.Method.POST
 import org.http4k.core.Method.GET
@@ -41,7 +40,8 @@ class CustomDoubleSerializer : JsonSerializer<Double?>() {
         }
     }
 }
-data class BankAccountSummary(val bank :String, val accountSummary: List<AccountSummary>)
+
+data class BankAccountSummary(val bank: String, val accountSummary: List<AccountSummary>)
 
 data class AccountSummary(val accountNumber: String, val accountDetails: AccountDetails,
                           @JsonSerialize(using = CustomDoubleSerializer::class)
@@ -52,20 +52,20 @@ data class AccountCreation(val accountDetails: AccountDetails, val balance: Doub
 const val AccountNotFound = """{message : "account number not found"}"""
 const val BadRequest = """{message : "bad request"}"""
 const val BankNotFound = """{message : "Bank not found"}"""
+const val ForeignBankFeeNotFound = """{message : "Foreign bank fee not found"}"""
 
 val accountCreationLens = Body.auto<AccountCreation>().toLens()
 
-fun requestBankValidation(req: Request, banks: ConcurrentHashMap<String, Bank>,body : (req:Request, bank : Bank) -> Response) : Response{
+fun requestBankValidation(req: Request, banks: ConcurrentHashMap<String, Bank>, body: (req: Request, bank: Bank) -> Response): Response {
     val bankName = req.path("bankName")
     return if (bankName == null) {
         Response(BAD_REQUEST).body(BadRequest)
     } else {
         val bank = banks.get(bankName)
-        if (bank == null){
+        if (bank == null) {
             Response(BAD_REQUEST).body(BankNotFound)
-        }
-        else {
-             body(req, bank)
+        } else {
+            body(req, bank)
         }
     }
 }
@@ -73,50 +73,55 @@ fun requestBankValidation(req: Request, banks: ConcurrentHashMap<String, Bank>,b
 
 fun bankApp(banks: ConcurrentHashMap<String, Bank>): RoutingHttpHandler =
         "/bank" bind routes(
-                "/{bankName}/details" bind GET to {req ->
-                    requestBankValidation(req,banks) { _, bank ->
+                "/{bankName}/details" bind GET to { req ->
+                    requestBankValidation(req, banks) { _, bank ->
                         Response(OK).body("{bank : ${bank.name}}")
                     }
                 },
-                "/{bankName}/accountsLeft" bind GET to {req ->
-                    requestBankValidation(req,banks) { _, bank ->
+                "/{bankName}/accountsLeft" bind GET to { req ->
+                    requestBankValidation(req, banks) { _, bank ->
                         Response(OK).body("{accountsLeft : ${bank.getAccountAvailable()}}")
                     }
                 },
-                "/{bankName}/accountList" bind GET to {req ->
-                    requestBankValidation(req,banks) { _, bank ->
+                "/{bankName}/accountList" bind GET to { req ->
+                    requestBankValidation(req, banks) { _, bank ->
                         val accounts = bank.getAccounts().map {
                             AccountSummary(it.accountNumber, it.accountDetails, it.balance())
                         }
-                        val bankAccountSummary = BankAccountSummary(bank.name,accounts)
+                        val bankAccountSummary = BankAccountSummary(bank.name, accounts)
                         val serialized = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(bankAccountSummary)
                         Response(OK).body(serialized)
                     }
                 },
                 "/{bankName}/account/{accountNumber}" bind GET to { req: Request ->
-                    requestBankValidation(req,banks,::getAccount)
+                    requestBankValidation(req, banks, ::getAccount)
                 },
                 "/{bankName}/account" bind POST to { req: Request ->
-                    requestBankValidation(req,banks,::createAccount)
-                }/*,
-                "/{bankNameA}/{bankNameB}/interbankRate/" bind GET to {req: Request ->
-                    getInterBankRate(req,bank)
-
-                }*/
+                    requestBankValidation(req, banks, ::createAccount)
+                },
+                "/{bankName}/{otherBankName}/interbankRate" bind GET to { req: Request ->
+                    requestBankValidation(req, banks, ::getInterBankRate)
+                }
         )
 
+data class InterBankJson(val rateType: String, val value: Double)
+
+fun interBankRateToJson(interBankFee: InterBankFee): InterBankJson = when (interBankFee) {
+    is PercentageFee -> InterBankJson("percentage", interBankFee.number)
+    is FixedFee -> InterBankJson("Fix Fee", interBankFee.number)
+}
 
 private fun getInterBankRate(req: Request, bank: Bank): Response {
-    val accountNumber = req.path("accountNumber")
-    return if (accountNumber == null) {
+    val otherBankName = req.path("otherBankName")
+    return if (otherBankName == null) {
         Response(BAD_REQUEST).body(BadRequest)
     } else {
-        val account = bank[accountNumber]
-        if (account == null) {
-            Response(NOT_FOUND).body(AccountNotFound)
+        val fee = bank.getForeignBankFee(otherBankName)
+        if (fee == null) {
+            Response(NOT_FOUND).body(ForeignBankFeeNotFound)
         } else {
-            val accountSummary = AccountSummary(account.accountNumber, account.accountDetails, account.balance())
-            val serialized = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(accountSummary)
+            val interBankRateToJson = interBankRateToJson(fee)
+            val serialized = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(interBankRateToJson)
             Response(OK).body(serialized)
         }
     }

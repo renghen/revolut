@@ -234,4 +234,28 @@ class AccountTest {
         }
     }
 
+    @Test
+    fun `transfers account between 2 different bank acc with fix fee of 1`() {
+        val accountA = bank["0050"]!!
+        val accountB = "0050"
+        val balanceA = accountA.balance()
+        val amountToTransfer = 9.0
+        val fee = BankUtils.calculateInterBankFee(bank.getForeignBankFee(otherBank.name)!!,amountToTransfer)
+
+        accountA.transferToAccountInOtherBank(otherBank.name, accountB, amountToTransfer)
+        assertEquals(balanceA - (amountToTransfer + fee), accountA.balance())
+    }
+
+    @Test
+    fun `transfers account between 2 different bank acc with percentage of 5 per cent`() {
+        val accountA = otherBank["0050"]!!
+        val accountB = "0050"
+        val balanceA = accountA.balance()
+        val amountToTransfer = 10.0
+        val fee = BankUtils.calculateInterBankFee(otherBank.getForeignBankFee(bank.name)!!,amountToTransfer)
+
+        accountA.transferToAccountInOtherBank(bank.name, accountB, amountToTransfer)
+        assertEquals(balanceA - (amountToTransfer + fee), accountA.balance())
+    }
+
 }

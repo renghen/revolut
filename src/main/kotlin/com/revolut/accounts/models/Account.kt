@@ -1,5 +1,6 @@
 package com.revolut.accounts.models
 
+import com.revolut.accounts.utils.BankUtils
 import scala.concurrent.stm.*
 import scala.concurrent.stm.japi.STM
 import java.util.concurrent.Callable
@@ -83,16 +84,15 @@ class Account private constructor(val accountNumber: String, val accountDetails:
                 if (otherAccount == null) {
                     throw AccountNotFoundException()
                 } else {
-                    val transferFeeAmount = when (transferFee) {
-                        is FixedFee -> transferFee.amount
-                        is PercentageFee -> (transferFee.amount * amount) / 100.0
-                    }
+                    val transferFeeAmount = BankUtils.calculateInterBankFee(transferFee, amount)
                     removeMoney(amount + transferFeeAmount)
                     otherAccount.addMoney(amount)
                 }
             }
         })
     }
+
+
 
     override fun balance(): Double = balance.get()
 }

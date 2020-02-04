@@ -24,7 +24,7 @@ object Main {
     }
 
     fun bankServer(port: Int): Http4kServer =
-            routes(bankApp(banks)/*, accountApp(banks)*/).asServer(Jetty(port))
+            routes(bankApp(banks), accountApp(banks)).asServer(Jetty(port))
 }
 
 fun main(args: Array<String>) {

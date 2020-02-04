@@ -7,6 +7,7 @@ import org.http4k.routing.RoutingHttpHandler
 import org.http4k.routing.bind
 import org.http4k.routing.routes
 import java.lang.Exception
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.locks.ReentrantLock
 
 data class AccountBalanceManipulation(val accountNumber: String, val amount: Double)
@@ -21,17 +22,16 @@ const val NotEnoughMoney = """{message : "account number has not enough money"}"
 const val MoneyParameter = """{message : "money parameter cannot be negative"}"""
 const val UnknownErrorMsg = """{message : "Unknown Error"}"""
 
-fun accountApp(bank: Bank): RoutingHttpHandler =
+fun accountApp(banks: ConcurrentHashMap<String, Bank>): RoutingHttpHandler =
         "/account" bind routes(
-                "/addMoney" bind Method.PUT to { req ->
-                    addMoneyToAccount(req, bank)
+                "/{bankName}/addMoney" bind Method.PUT to { req ->
+                    requestBankValidation(req, banks, ::addMoneyToAccount)
                 },
-                "/removeMoney" bind Method.PUT to { req ->
-                    removeMoneyFromAccount(req, bank)
-
+                "/{bankName}/removeMoney" bind Method.PUT to { req ->
+                    requestBankValidation(req, banks, ::removeMoneyFromAccount)
                 },
-                "/transfer" bind Method.PUT to { req ->
-                    transferMoneyBetweenAccounts(req, bank)
+                "/{bankName}/transfer" bind Method.PUT to { req ->
+                    requestBankValidation(req, banks, ::transferMoneyBetweenAccounts)
                 }
         )
 

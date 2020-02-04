@@ -8,7 +8,7 @@ import java.util.function.Supplier
 import kotlin.test.*
 
 class AccountTest {
-    val banks = ConcurrentHashMap<String, Bank>()
+    private val banks = ConcurrentHashMap<String, Bank>()
 
     init {
         val bankA = BankUtils.`concurrent creation of N Accounts`(100, name = "ABC")
@@ -86,7 +86,7 @@ class AccountTest {
     }
 
     @Test
-    fun `transfers account between 2 acc but with unsufficient amount`() {
+    fun `transfers account between 2 acc but with insufficient funds`() {
         val accountA = bank["0010"]!!
         val accountB = bank["0011"]!!
         val balanceA = accountA.balance()
@@ -211,6 +211,26 @@ class AccountTest {
 
         assertFailsWith(AccountNotFoundException::class) {
             accountA.transferToAccountInOtherBank(otherBank.name, accountB, 10.0)
+        }
+    }
+
+    @Test
+    fun `transfers account between 2 different bank acc but with wrong amount`() {
+        val accountA = bank["0050"]!!
+        val accountB = "0050"
+
+        assertFailsWith(IllegalArgumentException::class) {
+            accountA.transferToAccountInOtherBank(otherBank.name, accountB, -10.0)
+        }
+    }
+
+    @Test
+    fun `transfers account between 2 different bank acc but with insufficient funds`() {
+        val accountA = bank["0050"]!!
+        val accountB = "0050"
+
+        assertFailsWith(NotEnoughMoneyException::class) {
+            accountA.transferToAccountInOtherBank(otherBank.name, accountB, 1000.0)
         }
     }
 

@@ -62,9 +62,8 @@ class Bank constructor(val name: String) {
         otherBanksFeeMap.putIfAbsent(bank.name,OtherBankDetails(bank,fee))
     }
 
-    @Synchronized
     fun getForeignBankFee(bankName: String) : InterBankFee?{
         return otherBanksFeeMap[bankName]?.fees
     }
-    
+
 }

@@ -1,5 +1,6 @@
 package com.revolut.accounts.models
 
+import com.revolut.accounts.models.Bank.Companion.NoFee
 import com.revolut.accounts.models.Bank.Companion.formatIntForAcountNumber
 import java.lang.Exception
 import com.revolut.accounts.utils.BankUtils.`concurrent creation of N Accounts`
@@ -64,6 +65,34 @@ class BankTest {
             println(e.cause?.cause)
         }
         assertEquals(1000, bank.getAccounts().size)
+    }
+
+    @Test
+    fun `interbank test`() {
+        val bankA = Bank("abc")
+        val bankB = Bank("xyz")
+        val bankC = Bank("def")
+
+        bankA.addForeignBank(bankB, NoFee)
+        bankA.addForeignBank(bankC, NoFee)
+
+        bankB.addForeignBank(bankA, PercentageFee(5.0))
+        bankB.addForeignBank(bankC, NoFee)
+
+        bankC.addForeignBank(bankA, FixedFee(1.0))
+        bankC.addForeignBank(bankB, NoFee)
+
+        assertEquals(NoFee, bankA.getForeignBankFee(bankB.name))
+        assertEquals(NoFee, bankA.getForeignBankFee(bankC.name))
+        assertNull(bankA.getForeignBankFee("notExist"))
+
+        assertEquals(PercentageFee(5.0), bankB.getForeignBankFee(bankA.name))
+        assertEquals(NoFee, bankB.getForeignBankFee(bankC.name))
+        assertNull(bankB.getForeignBankFee("notExist"))
+
+        assertEquals(FixedFee(1.0), bankC.getForeignBankFee(bankA.name))
+        assertEquals(NoFee, bankC.getForeignBankFee(bankB.name))
+        assertNull(bankC.getForeignBankFee("notExist"))
     }
 }
 

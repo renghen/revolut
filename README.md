@@ -12,6 +12,6 @@
 5. concurrent test using completabl futures but not for http side
 
 ## todo
-1. concurrent test for http
-2. implement multiple banks
+1. ~concurrent test for http~
+2. ~implement multiple banks~
 3. transfer across bank account

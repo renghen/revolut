@@ -39,7 +39,7 @@ fun accountApp(banks: ConcurrentHashMap<String, Bank>): RoutingHttpHandler =
                     requestBankValidation(req, banks, ::transferMoneyBetweenAccounts)
                 },
                 "/{bankName}/transferInterbank" bind Method.PUT to { req ->
-                    requestBankValidation(req, banks, ::transferMoneyBetweenAccounts)
+                    requestBankValidation(req, banks, ::transferMoneyBetweenBankAccounts)
                 }
         )
 

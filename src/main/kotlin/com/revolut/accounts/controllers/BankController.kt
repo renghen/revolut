@@ -50,6 +50,7 @@ data class AccountSummary(val accountNumber: String, val accountDetails: Account
 data class AccountCreation(val accountDetails: AccountDetails, val balance: Double)
 
 const val AccountNotFound = """{message : "account number not found"}"""
+const val OtherAccountNotFound = """{message : "The foreign account number not found"}"""
 const val BadRequest = """{message : "bad request"}"""
 const val BankNotFound = """{message : "Bank not found"}"""
 const val ForeignBankFeeNotFound = """{message : "Foreign bank fee not found"}"""

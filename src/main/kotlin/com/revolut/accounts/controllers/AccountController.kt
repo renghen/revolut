@@ -18,6 +18,11 @@ data class AccountTransfer(val accountNumberA: String, val accountNumberB: Strin
 
 val accountTransferLens = Body.auto<AccountTransfer>().toLens()
 
+data class AccountTransferInterBankAccount(val accountNumberA: String, val bankName :String,val accountNumberB: String,
+                                           val amount: Double)
+
+val accountTransferInterBankAccountLens = Body.auto<AccountTransferInterBankAccount>().toLens()
+
 const val NotEnoughMoney = """{message : "account number has not enough money"}"""
 const val MoneyParameter = """{message : "money parameter cannot be negative"}"""
 const val UnknownErrorMsg = """{message : "Unknown Error"}"""
@@ -32,8 +37,53 @@ fun accountApp(banks: ConcurrentHashMap<String, Bank>): RoutingHttpHandler =
                 },
                 "/{bankName}/transfer" bind Method.PUT to { req ->
                     requestBankValidation(req, banks, ::transferMoneyBetweenAccounts)
+                },
+                "/{bankName}/transferInterbank" bind Method.PUT to { req ->
+                    requestBankValidation(req, banks, ::transferMoneyBetweenAccounts)
                 }
         )
+
+fun transferMoneyBetweenBankAccounts(req: Request, bank: Bank): Response {
+    val transferParams = try {
+        accountTransferInterBankAccountLens(req)
+    } catch (e: Exception) {
+        null
+    }
+
+    return if (transferParams == null) {
+        Response(Status.BAD_REQUEST).body(BadRequest)
+    } else {
+        val accountA = bank[transferParams.accountNumberA]
+        if (accountA == null) {
+            Response(Status.BAD_REQUEST).body(AccountNotFound)
+        } else {
+            try {
+                accountA.transferToAccountInOtherBank(transferParams.bankName,transferParams.accountNumberB,transferParams.amount)
+                val msg = """"{message" : "transfer successful}"""
+                Response(Status.OK).body(msg)
+            } catch (ex: Exception) {
+                when (ex) {
+                    is IllegalArgumentException -> {
+                        Response(Status.BAD_REQUEST).body(MoneyParameter)
+                    }
+                    is NotEnoughMoneyException -> {
+                        Response(Status.BAD_REQUEST).body(NotEnoughMoney)
+                    }
+                    is TransferFeeDoesNotExistException ->{
+                        Response(Status.BAD_REQUEST).body(ForeignBankFeeNotFound)
+                    }
+                    is AccountNotFoundException ->{
+                        Response(Status.BAD_REQUEST).body(OtherAccountNotFound)
+                    }
+                    else -> {
+                        Response(Status.INTERNAL_SERVER_ERROR).body(UnknownErrorMsg)
+                    }
+                }
+            }
+        }
+    }
+}
+
 
 fun transferMoneyBetweenAccounts(req: Request, bank: Bank): Response {
     val accountTransfer = try {

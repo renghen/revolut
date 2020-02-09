@@ -15,3 +15,4 @@
 1. ~concurrent test for http~
 2. ~implement multiple banks~
 3. ~transfer across bank account~
+4. try zio stm

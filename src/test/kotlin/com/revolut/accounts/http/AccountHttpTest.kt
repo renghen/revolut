@@ -546,26 +546,6 @@ class AccountHttpTest {
         assertThat(response, hasStatus(OK).and(hasBody(TransferInterBankMsg)))
     }
 
-    private val interBankAccountOfInterestA = "0040"
-    private val interBankAccountOfInterestB = "0041"
-    private val interBankAccountTransferAtoB =
-            """{
-                  "accountNumberA": "$interBankAccountOfInterestA",
-                  "bankName": "$otherBankName",
-                  "accountNumberB": "$interBankAccountOfInterestB", 
-                  "amount": 10.0
-               }
-            """
-
-    private val interBankAccountTransferBtoA =
-            """{
-                  "accountNumberA": "$interBankAccountOfInterestB",
-                  "bankName": "$bankName",
-                  "accountNumberB": "$interBankAccountOfInterestA", 
-                  "amount": 10.0
-               }
-            """
-
     @Test
     fun `transfers account between 2 different bank acc with fix fee of 1`() {
         val accountOfInterest = "0050"
@@ -583,7 +563,7 @@ class AccountHttpTest {
         val request = Request(PUT, "$accountUrl/transferInterbank").body(interBankAccountTransferAtoB)
         client(request)
 
-        assertEquals(balanceA - 11 , bank[accountOfInterest]!!.balance())
+        assertEquals(balanceA - 11, bank[accountOfInterest]!!.balance())
         assertEquals(balanceB + 10, otherBank[accountOfInterest]!!.balance())
     }
 
@@ -604,12 +584,32 @@ class AccountHttpTest {
         val request = Request(PUT, "$otherAccountUrl/transferInterbank").body(interBankAccountTransferAtoB)
         client(request)
 
-        assertEquals(balanceA + 10 , bank[accountOfInterest]!!.balance())
+        assertEquals(balanceA + 10, bank[accountOfInterest]!!.balance())
         assertEquals(balanceB - 10.5, otherBank[accountOfInterest]!!.balance())
     }
 
     @Test
     fun `endpoint interbank account transfer with correct params 2000 times concurrently`() {
+        val interBankAccountOfInterestA = "0040"
+        val interBankAccountOfInterestB = "0040"
+        val interBankAccountTransferAtoB =
+                """|{
+                   |  "accountNumberA": "$interBankAccountOfInterestA",
+                   |  "bankName": "$otherBankName",
+                   |  "accountNumberB": "$interBankAccountOfInterestB", 
+                   |  "amount": 10.0
+                   |}
+            """.trimMargin()
+
+        val interBankAccountTransferBtoA =
+                """|{
+                   |  "accountNumberA": "$interBankAccountOfInterestB",
+                   |  "bankName": "$bankName",
+                   |  "accountNumberB": "$interBankAccountOfInterestA", 
+                   |  "amount": 10.0
+                   |}
+            """.trimMargin()
+
         val balanceA = bank[interBankAccountOfInterestA]!! + 1000.0
         val balanceB = otherBank[interBankAccountOfInterestB]!! + 1000.0
 
@@ -629,11 +629,79 @@ class AccountHttpTest {
         }.toTypedArray()
 
         CompletableFuture.allOf(*futures).get()
-        assertEquals(1100.0 - 1000 , bank[interBankAccountOfInterestA]!!.balance())
-        assertEquals(1100.0 - (1000 * 0.5), otherBank[interBankAccountOfInterestB]!!.balance())
+        assertEquals(balanceA - 1000, bank[interBankAccountOfInterestA]!!.balance())
+        assertEquals(balanceB - (1000 * 0.5), otherBank[interBankAccountOfInterestB]!!.balance())
     }
-/*
-*/
+
+    @Test
+    fun `endpoint interbank account transfer for 4000 times concurrently with add and remove added into the mix`() {
+        val executorService = Executors.newFixedThreadPool(10)
+        val interBankAccountOfInterestA = "0041"
+        val interBankAccountOfInterestB = "0041"
+        val interBankAccountTransferAtoB =
+                """|{
+                   |  "accountNumberA": "$interBankAccountOfInterestA",
+                   |  "bankName": "$otherBankName",
+                   |  "accountNumberB": "$interBankAccountOfInterestB", 
+                   |  "amount": 10.0
+                   |}
+            """.trimMargin()
+
+        val interBankAccountTransferBtoA =
+                """|{
+                   |  "accountNumberA": "$interBankAccountOfInterestB",
+                   |  "bankName": "$bankName",
+                   |  "accountNumberB": "$interBankAccountOfInterestA", 
+                   |  "amount": 10.0
+                   |}
+            """.trimMargin()
+
+        val balanceA = bank[interBankAccountOfInterestA]!! + 1000.0
+        val balanceB = otherBank[interBankAccountOfInterestB]!! + 1000.0
+
+        val futures = (1..4000).map {
+            CompletableFuture.supplyAsync(Supplier {
+                when (it % 4) {
+                    0 -> {
+                        val request = Request(PUT, "$accountUrl/transferInterbank").body(interBankAccountTransferAtoB)
+                        client(request)
+                        Unit
+                    }
+                    1 -> {
+                        val request = Request(PUT, "$otherAccountUrl/transferInterbank").body(interBankAccountTransferBtoA)
+                        client(request)
+                        Unit
+                    }
+                    2 -> {
+                        val accountInput =
+                                """|{
+                                   |   "accountNumber": "0041", 
+                                   |   "amount": 1.0
+                                   |}
+                                """.trimMargin()
+                        val request = Request(PUT, "$accountUrl/addMoney").body(accountInput)
+                        client(request)
+                        Unit
+                    }
+                    3 -> {
+                        val accountInput =
+                                """|{
+                                   |   "accountNumber": "$interBankAccountOfInterestB", 
+                                   |   "amount": 0.5
+                                   |}
+                                """.trimMargin()
+                        val request = Request(PUT, "$otherAccountUrl/addMoney").body(accountInput)
+                        client(request)
+                        Unit
+                    }
+                }
+            }, executorService)
+        }.toTypedArray()
+
+        CompletableFuture.allOf(*futures).get()
+        assertEquals(balanceA, bank[interBankAccountOfInterestA]!!.balance())
+        assertEquals(balanceB, otherBank[interBankAccountOfInterestB]!!.balance())
+    }
 
     //endregion
 }

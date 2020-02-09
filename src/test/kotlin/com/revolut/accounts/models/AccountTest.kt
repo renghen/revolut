@@ -282,7 +282,7 @@ class AccountTest {
     }
 
     @Test
-    fun `transfers account between 2 accounts for 4000 times concurrently with add and remove added into the mix`() {
+    fun `transfers account between 2 different bank accounts for 4000 times concurrently with add and remove added into the mix`() {
         val executorService = Executors.newFixedThreadPool(10)
         val accountA = bank["0052"]!!
         val accountB = otherBank["0052"]!!

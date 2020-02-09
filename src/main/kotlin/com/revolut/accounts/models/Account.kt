@@ -29,12 +29,12 @@ class Account private constructor(val accountNumber: String, val accountDetails:
             throw IllegalArgumentException("Wrong amount")
         }
 
-        STM.atomic(Runnable {
+        return STM.atomic(Callable {
             balance.transform {
                 it + amount
             }
+            balance.get()
         })
-        return balance.get()
     }
 
     @Throws(IllegalArgumentException::class)

@@ -53,6 +53,12 @@
         </dependency>
 
         <dependency>
+            <groupId>dev.zio</groupId>
+            <artifactId>zio_2.13</artifactId>
+            <version>1.0.0-RC17</version>
+        </dependency>
+
+        <dependency>
             <groupId>org.http4k</groupId>
             <artifactId>http4k-core</artifactId>
             <version>${http4k.version}</version>

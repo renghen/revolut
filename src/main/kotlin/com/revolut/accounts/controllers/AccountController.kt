@@ -26,6 +26,7 @@ val accountTransferInterBankAccountLens = Body.auto<AccountTransferInterBankAcco
 const val NotEnoughMoney = """{message : "account number has not enough money"}"""
 const val MoneyParameter = """{message : "money parameter cannot be negative"}"""
 const val UnknownErrorMsg = """{message : "Unknown Error"}"""
+const val TransferInterBankMsg = """{"message" : "transfer successful"}"""
 
 fun accountApp(banks: ConcurrentHashMap<String, Bank>): RoutingHttpHandler =
         "/account" bind routes(
@@ -43,6 +44,7 @@ fun accountApp(banks: ConcurrentHashMap<String, Bank>): RoutingHttpHandler =
                 }
         )
 
+
 fun transferMoneyBetweenBankAccounts(req: Request, bank: Bank): Response {
     val transferParams = try {
         accountTransferInterBankAccountLens(req)
@@ -59,7 +61,7 @@ fun transferMoneyBetweenBankAccounts(req: Request, bank: Bank): Response {
         } else {
             try {
                 accountA.transferToAccountInOtherBank(transferParams.bankName,transferParams.accountNumberB,transferParams.amount)
-                val msg = """"{message" : "transfer successful}"""
+                val msg = TransferInterBankMsg
                 Response(Status.OK).body(msg)
             } catch (ex: Exception) {
                 when (ex) {

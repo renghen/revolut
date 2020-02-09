@@ -13,10 +13,11 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <java.version>11</java.version>
+        <java.version>13</java.version>
         <kotlin.version>1.3.61</kotlin.version>
         <http4k.version>3.229.0</http4k.version>
         <junit-jupiter.version>5.5.2</junit-jupiter.version>
+        <scala.version>2.13.0</scala.version>
     </properties>
 
     <repositories>
@@ -53,9 +54,15 @@
         </dependency>
 
         <dependency>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-library</artifactId>
+            <version>${scala.version}</version>
+        </dependency>
+
+        <dependency>
             <groupId>dev.zio</groupId>
             <artifactId>zio_2.13</artifactId>
-            <version>1.0.0-RC17</version>
+            <version>1.0.0-RC14</version>
         </dependency>
 
         <dependency>
@@ -174,6 +181,26 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>net.alchim31.maven</groupId>
+                <artifactId>scala-maven-plugin</artifactId>
+                <version>3.2.2</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>compile</goal>
+                            <goal>testCompile</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <args>
+                        <!-- work-around for https://issues.scala-lang.org/browse/SI-8358 -->
+                        <arg>-nobootcp</arg>
+                    </args>
+                </configuration>
             </plugin>
 
             <plugin>

@@ -14,4 +14,4 @@
 ## todo
 1. ~concurrent test for http~
 2. ~implement multiple banks~
-3. transfer across bank account
+3. ~transfer across bank account

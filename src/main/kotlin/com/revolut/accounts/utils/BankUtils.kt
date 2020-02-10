@@ -1,6 +1,7 @@
 package com.revolut.accounts.utils
 
-import com.revolut.accounts.models.*
+import com.revolut.accounts.models.AccountDetails
+import com.revolut.accounts.models.Bank
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executors
 import java.util.function.Supplier
@@ -18,13 +19,5 @@ object BankUtils {
 
         CompletableFuture.allOf(*futures).get()
         return bank
-    }
-
-    fun calculateInterBankFee(transferFee: InterBankFee, amount: Double): Double {
-        val transferFeeAmount = when (transferFee) {
-            is FixedFee -> transferFee.amount
-            is PercentageFee -> (transferFee.amount * amount) / 100.0
-        }
-        return transferFeeAmount
     }
 }

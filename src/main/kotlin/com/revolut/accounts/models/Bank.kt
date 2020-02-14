@@ -13,6 +13,7 @@ class Bank constructor(val name: String) {
     private val maxAccount: Long = 1000
     private val accountsMap: ConcurrentHashMap<String, Account> = ConcurrentHashMap()
     private var currentAccount: Long = -1
+    private val ledger = ArrayList<AccountAction>()
 
     //utility to generate number
     @Throws(AccountFullException::class)
@@ -44,5 +45,9 @@ class Bank constructor(val name: String) {
     fun getAccountAvailable(): Long = maxAccount - accountsMap.keys().toList().size
 
     fun getAccounts(): List<Account> = accountsMap.values.toList().sortedBy { it.accountNumber }
+
+    fun addToledger(accountAction : AccountAction){
+        ledger.add(accountAction)
+    }
 
 }

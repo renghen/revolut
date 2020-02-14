@@ -8,6 +8,10 @@ class NotEnoughMoneyException : Exception("Not enough money")
 
 data class AccountDetails(val fullName: String)
 
+sealed class AccountAction
+data class AddMoneyAction(val accountNumber: String, val amount: Double) : AccountAction()
+data class RemoveMoneyAction(val accountNumber: String, val amount: Double) : AccountAction()
+
 class Account private constructor(val accountNumber: String, val accountDetails: AccountDetails,
                                   initialBalance: Double, val bank: Bank) : IAccount {
 
@@ -26,12 +30,13 @@ class Account private constructor(val accountNumber: String, val accountDetails:
             throw IllegalArgumentException("Wrong amount")
         }
 
-        STM.atomic(Runnable {
+        return STM.atomic(Callable {
             balance.transform {
                 it + amount
             }
+            this.bank.addToledger(AddMoneyAction(accountNumber,amount))
+            balance.get()
         })
-        return balance.get()
     }
 
     @Throws(IllegalArgumentException::class)
@@ -53,6 +58,7 @@ class Account private constructor(val accountNumber: String, val accountDetails:
             balance.transform {
                 it - amount
             }
+            this.bank.addToledger(RemoveMoneyAction(accountNumber,amount))
             balance.get()
         })
     }

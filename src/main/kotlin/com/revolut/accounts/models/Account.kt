@@ -1,19 +1,15 @@
 package com.revolut.accounts.models
 
+import com.revolut.accounts.utils.BankUtils
 import scala.concurrent.stm.*
 import scala.concurrent.stm.japi.STM
-import java.time.LocalDate
-import java.time.LocalDateTime
 import java.util.concurrent.Callable
 
 class NotEnoughMoneyException : Exception("Not enough money")
+class TransferFeeDoesNotExistException : Exception("Transfer fee does not exist")
+class AccountNotFoundException : Exception("Account number not found")
 
 data class AccountDetails(val fullName: String)
-
-sealed class AccountAction
-data class CreateAccountAction(val accountNumber: String, val initialBalance: Double, val dateTime: LocalDateTime = LocalDateTime.now()) : AccountAction()
-data class AddMoneyAction(val accountNumber: String, val amount: Double, val dateTime: LocalDateTime = LocalDateTime.now()) : AccountAction()
-data class RemoveMoneyAction(val accountNumber: String, val amount: Double, val dateTime: LocalDateTime = LocalDateTime.now()) : AccountAction()
 
 class Account private constructor(val accountNumber: String, val accountDetails: AccountDetails,
                                   initialBalance: Double, val bank: Bank) : IAccount {
@@ -26,7 +22,6 @@ class Account private constructor(val accountNumber: String, val accountDetails:
     }
 
     private val balance: Ref.View<Double> = STM.newRef<Double>(initialBalance)
-    //val ledger = STM.newRef<List<AccountAction>>(listOf())
 
     @Throws(IllegalArgumentException::class)
     override fun addMoney(amount: Double): Double {
@@ -34,15 +29,12 @@ class Account private constructor(val accountNumber: String, val accountDetails:
             throw IllegalArgumentException("Wrong amount")
         }
 
-        return STM.atomic(Callable {
+        STM.atomic(Runnable {
             balance.transform {
                 it + amount
             }
-            this.bank.ledger.transform {
-                it + AddMoneyAction(accountNumber,amount)
-            }
-            balance.get()
         })
+        return balance.get()
     }
 
     @Throws(IllegalArgumentException::class)
@@ -64,9 +56,6 @@ class Account private constructor(val accountNumber: String, val accountDetails:
             balance.transform {
                 it - amount
             }
-            this.bank.ledger.transform {
-                it + RemoveMoneyAction(accountNumber,amount)
-            }
             balance.get()
         })
     }
@@ -83,6 +72,27 @@ class Account private constructor(val accountNumber: String, val accountDetails:
             other.addMoney(amount)
         })
     }
+
+    @Throws(IllegalArgumentException::class, NotEnoughMoneyException::class,
+            TransferFeeDoesNotExistException::class, AccountNotFoundException::class)
+    override fun transferToAccountInOtherBank(otherBank: String, otherAccountName: String, amount: Double) {
+        STM.atomic(Runnable {
+            val transferFee = bank.getForeignBankFee(otherBank)
+            if (transferFee == null) {
+                throw TransferFeeDoesNotExistException()
+            } else {
+                val otherAccount = bank.getForeignAccount(otherBank, otherAccountName)
+                if (otherAccount == null) {
+                    throw AccountNotFoundException()
+                } else {
+                    val transferFeeAmount = BankUtils.calculateInterBankFee(transferFee, amount)
+                    removeMoney(amount + transferFeeAmount)
+                    otherAccount.addMoney(amount)
+                }
+            }
+        })
+    }
+
 
     override fun balance(): Double = balance.get()
 }

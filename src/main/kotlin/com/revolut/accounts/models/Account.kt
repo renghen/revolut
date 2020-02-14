@@ -67,16 +67,16 @@ class Account private constructor(val accountNumber: String, val accountDetails:
 
     @Throws(IllegalArgumentException::class, NotEnoughMoneyException::class)
     override fun transferTo(other: Account, amount: Double) {
-        STM.atomic(Runnable {
+        STM.atomic {
             removeMoney(amount)
             other.addMoney(amount)
-        })
+        }
     }
 
     @Throws(IllegalArgumentException::class, NotEnoughMoneyException::class,
             TransferFeeDoesNotExistException::class, AccountNotFoundException::class)
     override fun transferToAccountInOtherBank(otherBank: String, otherAccountName: String, amount: Double) {
-        STM.atomic(Runnable {
+        STM.atomic {
             val transferFee = bank.getForeignBankFee(otherBank)
             if (transferFee == null) {
                 throw TransferFeeDoesNotExistException()
@@ -90,7 +90,7 @@ class Account private constructor(val accountNumber: String, val accountDetails:
                     otherAccount.addMoney(amount)
                 }
             }
-        })
+        }
     }
 
 

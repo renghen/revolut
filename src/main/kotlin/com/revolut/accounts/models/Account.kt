@@ -9,6 +9,7 @@ class NotEnoughMoneyException : Exception("Not enough money")
 data class AccountDetails(val fullName: String)
 
 sealed class AccountAction
+data class CreateAccountAction(val accountNumber: String, val initialBalance: Double) : AccountAction()
 data class AddMoneyAction(val accountNumber: String, val amount: Double) : AccountAction()
 data class RemoveMoneyAction(val accountNumber: String, val amount: Double) : AccountAction()
 

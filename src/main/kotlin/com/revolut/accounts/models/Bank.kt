@@ -31,6 +31,7 @@ class Bank constructor(val name: String) {
     fun createAccount(accountDetails: AccountDetails, initialAmount: Double) :String {
         val acc = Account.createAccount(accountDetails, initialAmount, this)
         accountsMap[acc.accountNumber] = acc
+        addToledger(AddMoneyAction(acc.accountNumber,initialAmount))
         return acc.accountNumber
     }
 

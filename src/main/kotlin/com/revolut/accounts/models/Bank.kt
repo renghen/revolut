@@ -1,6 +1,9 @@
 package com.revolut.accounts.models
 
+import scala.concurrent.stm.japi.STM
+import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CopyOnWriteArrayList
 
 class AccountFullException : Exception("Account Full")
 
@@ -13,7 +16,7 @@ class Bank constructor(val name: String) {
     private val maxAccount: Long = 1000
     private val accountsMap: ConcurrentHashMap<String, Account> = ConcurrentHashMap()
     private var currentAccount: Long = -1
-    private val ledger = ArrayList<AccountAction>()
+    val ledger = STM.newRef<List<AccountAction>>(listOf())
 
     //utility to generate number
     @Throws(AccountFullException::class)
@@ -31,7 +34,7 @@ class Bank constructor(val name: String) {
     fun createAccount(accountDetails: AccountDetails, initialAmount: Double) :String {
         val acc = Account.createAccount(accountDetails, initialAmount, this)
         accountsMap[acc.accountNumber] = acc
-        addToledger(AddMoneyAction(acc.accountNumber,initialAmount))
+        addToLedger(CreateAccountAction(acc.accountNumber,initialAmount))
         return acc.accountNumber
     }
 
@@ -47,8 +50,11 @@ class Bank constructor(val name: String) {
 
     fun getAccounts(): List<Account> = accountsMap.values.toList().sortedBy { it.accountNumber }
 
-    fun addToledger(accountAction : AccountAction){
-        ledger.add(accountAction)
+    fun addToLedger(accountAction : AccountAction){
+        STM.atomic(Callable {
+            ledger.transform{
+                it + accountAction
+            }
+        })
     }
-
 }

@@ -2,6 +2,8 @@ package com.revolut.accounts.models
 
 import scala.concurrent.stm.*
 import scala.concurrent.stm.japi.STM
+import java.time.LocalDate
+import java.time.LocalDateTime
 import java.util.concurrent.Callable
 
 class NotEnoughMoneyException : Exception("Not enough money")
@@ -9,9 +11,9 @@ class NotEnoughMoneyException : Exception("Not enough money")
 data class AccountDetails(val fullName: String)
 
 sealed class AccountAction
-data class CreateAccountAction(val accountNumber: String, val initialBalance: Double) : AccountAction()
-data class AddMoneyAction(val accountNumber: String, val amount: Double) : AccountAction()
-data class RemoveMoneyAction(val accountNumber: String, val amount: Double) : AccountAction()
+data class CreateAccountAction(val accountNumber: String, val initialBalance: Double, val dateTime: LocalDateTime = LocalDateTime.now()) : AccountAction()
+data class AddMoneyAction(val accountNumber: String, val amount: Double, val dateTime: LocalDateTime = LocalDateTime.now()) : AccountAction()
+data class RemoveMoneyAction(val accountNumber: String, val amount: Double, val dateTime: LocalDateTime = LocalDateTime.now()) : AccountAction()
 
 class Account private constructor(val accountNumber: String, val accountDetails: AccountDetails,
                                   initialBalance: Double, val bank: Bank) : IAccount {
@@ -24,6 +26,7 @@ class Account private constructor(val accountNumber: String, val accountDetails:
     }
 
     private val balance: Ref.View<Double> = STM.newRef<Double>(initialBalance)
+    //val ledger = STM.newRef<List<AccountAction>>(listOf())
 
     @Throws(IllegalArgumentException::class)
     override fun addMoney(amount: Double): Double {
@@ -35,7 +38,9 @@ class Account private constructor(val accountNumber: String, val accountDetails:
             balance.transform {
                 it + amount
             }
-            this.bank.addToledger(AddMoneyAction(accountNumber,amount))
+            this.bank.ledger.transform {
+                it + AddMoneyAction(accountNumber,amount)
+            }
             balance.get()
         })
     }
@@ -59,7 +64,9 @@ class Account private constructor(val accountNumber: String, val accountDetails:
             balance.transform {
                 it - amount
             }
-            this.bank.addToledger(RemoveMoneyAction(accountNumber,amount))
+            this.bank.ledger.transform {
+                it + RemoveMoneyAction(accountNumber,amount)
+            }
             balance.get()
         })
     }

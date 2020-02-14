@@ -17,20 +17,25 @@ class AccountTest {
     fun `add incorrect amount`() {
         val account = bank["0005"]
         if (account != null) {
+            val beforeTransactions = account.bank.ledger.get().count()
             assertFailsWith(IllegalArgumentException::class) {
                 account.addMoney(-1.0)
             }
+            assertEquals(beforeTransactions, account.bank.ledger.get().size)
         } else {
             assertNotNull<Account>(account, "account '0005' cannot be null")
         }
+
     }
 
     @Test
     fun `remove incorrect amount`() {
         val account = bank["0005"]
         if (account != null) {
+            val beforeTransactions = account.bank.ledger.get().count()
             assertFailsWith(IllegalArgumentException::class) {
                 account.removeMoney(-1.0)
+                assertEquals(beforeTransactions, account.bank.ledger.get().size)
             }
         } else {
             assertNotNull<Account>(account, "account '0005' cannot be null")
@@ -41,6 +46,7 @@ class AccountTest {
     fun `remove too much`() {
         val account = bank["0005"]
         if (account != null) {
+            val beforeTransactions = account.bank.ledger.get().count()
             assertFailsWith(NotEnoughMoneyException::class) {
                 try {
                     account.removeMoney(account.balance() + 10)
@@ -48,6 +54,7 @@ class AccountTest {
                     throw e.cause ?: e
                 }
             }
+            assertEquals(beforeTransactions, account.bank.ledger.get().size)
         } else {
             assertNotNull<Account>(account, "account '0005' cannot be null")
         }
@@ -59,14 +66,16 @@ class AccountTest {
         val account = bank["0000"]
 
         if (account != null) {
+            val beforeTransactions = account.bank.ledger.get().count()
             val futures = (1..1000).map {
                 CompletableFuture.supplyAsync(Supplier {
-                    account.addMoney(1.toDouble())
+                    account.addMoney(it.toDouble())
                 }, executorService)
             }.toTypedArray()
 
             CompletableFuture.allOf(*futures).get()
-            assertEquals(1100.00, account.balance())
+            assertEquals(100.00 + (1..1000).sum(), account.balance())
+            assertEquals(beforeTransactions + 1000, account.bank.ledger.get().count())
         } else {
             assertNotNull<Account>(account, "account '0000' cannot be null")
         }
@@ -78,6 +87,7 @@ class AccountTest {
         val account = bank["0002"]
 
         if (account != null) {
+            val beforeTransactions = account.bank.ledger.get().count()
             account.addMoney(1000.toDouble()) // to prevent under flow exception
             val futures = (1..1000).map {
                 CompletableFuture.supplyAsync(Supplier {
@@ -91,6 +101,7 @@ class AccountTest {
 
             CompletableFuture.allOf(*futures).get()
             assertEquals(1100.00, account.balance())
+            assertEquals(beforeTransactions + 1000 + 1, account.bank.ledger.get().count())
         } else {
             assertNotNull<Account>(account, "account '0002' cannot be null")
         }
@@ -102,10 +113,12 @@ class AccountTest {
         val accountB = bank["0011"]
 
         if (accountA != null && accountB != null) {
+            val beforeTransactions = accountA.bank.ledger.get().count()
             val balanceA = accountA.balance()
             assertFailsWith(NotEnoughMoneyException::class) {
                 accountA.transferTo(accountB, balanceA + 1)
             }
+            assertEquals(beforeTransactions, accountA.bank.ledger.get().count())
         } else {
             assertNotNull<Account>(accountA, "account '0010' cannot be null")
             assertNotNull<Account>(accountB, "account '0011' cannot be null")
@@ -118,9 +131,11 @@ class AccountTest {
         val accountB = bank["0011"]
 
         if (accountA != null && accountB != null) {
+            val beforeTransactions = accountA.bank.ledger.get().count()
             assertFailsWith(IllegalArgumentException::class) {
                 accountA.transferTo(accountB, -10.00)
             }
+            assertEquals(beforeTransactions, accountA.bank.ledger.get().count())
         } else {
             assertNotNull<Account>(accountA, "account '0010' cannot be null")
             assertNotNull<Account>(accountB, "account '0011' cannot be null")
@@ -136,6 +151,7 @@ class AccountTest {
         if (accountA != null && accountB != null) {
             val balanceA = accountA.balance()
             val balanceB = accountB.balance()
+            val beforeTransactions = accountA.bank.ledger.get().count()
             val futures = (1..1000).map {
                 CompletableFuture.supplyAsync(Supplier {
                     if (it % 2 == 0) {
@@ -149,6 +165,8 @@ class AccountTest {
             CompletableFuture.allOf(*futures).get()
             assertEquals(balanceA, accountA.balance())
             assertEquals(balanceB, accountB.balance())
+            assertEquals(beforeTransactions + 2 * 1000, accountA.bank.ledger.get().count())
+
         } else {
             assertNotNull<Account>(accountA, "account '0010' cannot be null")
             assertNotNull<Account>(accountB, "account '0011' cannot be null")
@@ -165,6 +183,7 @@ class AccountTest {
         if (accountA != null && accountB != null) {
             val balanceA = accountA.balance()
             val balanceB = accountB.balance()
+            val beforeTransactions = accountA.bank.ledger.get().count()
             val futures = (1..6000).map {
                 CompletableFuture.supplyAsync(Supplier {
                     when (it % 6) {
@@ -180,7 +199,7 @@ class AccountTest {
                             accountA.removeMoney(1.toDouble());Unit
                         }
                         5 -> {
-                             accountB.removeMoney(1.toDouble());Unit
+                            accountB.removeMoney(1.toDouble());Unit
                         }
                     }
                 }, executorService)
@@ -189,6 +208,7 @@ class AccountTest {
             CompletableFuture.allOf(*futures).get()
             assertEquals(balanceA, accountA.balance())
             assertEquals(balanceB, accountB.balance())
+            assertEquals(beforeTransactions + (2 * 2000) + 4000, accountA.bank.ledger.get().count())
         } else {
             assertNotNull<Account>(accountA, "account '0010' cannot be null")
             assertNotNull<Account>(accountB, "account '0011' cannot be null")
@@ -206,6 +226,7 @@ class AccountTest {
             val balanceA = accountA.balance()
             val balanceB = accountB.balance()
             val balanceC = accountC.balance()
+            val beforeTransactions = accountA.bank.ledger.get().count()
             accountC.addMoney(2000.00)
             val futures = (1..4000).map {
                 CompletableFuture.supplyAsync(Supplier {
@@ -222,6 +243,7 @@ class AccountTest {
             assertEquals(balanceA + 1000.00, accountA.balance())
             assertEquals(balanceB + 1000.00, accountB.balance())
             assertEquals(balanceC, accountC.balance())
+            assertEquals(beforeTransactions + 1 + (4 * 2 * 1000), accountA.bank.ledger.get().count())
         } else {
             assertNotNull<Account>(accountA, "account '0012' cannot be null")
             assertNotNull<Account>(accountB, "account '0013' cannot be null")

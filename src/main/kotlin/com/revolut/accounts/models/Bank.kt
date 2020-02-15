@@ -1,5 +1,7 @@
 package com.revolut.accounts.models
 
+import scala.concurrent.stm.japi.STM
+import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentHashMap
 
 class AccountFullException : Exception("Account Full")
@@ -21,10 +23,12 @@ class Bank constructor(val name: String) {
     private val accountsMap: ConcurrentHashMap<String, Account> = ConcurrentHashMap()
     private var currentAccount: Long = -1
     private val otherBanksFeeMap: ConcurrentHashMap<String, OtherBankDetails> = ConcurrentHashMap()
+    val ledger = STM.newRef<List<AccountAction>>(listOf())
 
     init {
         otherBanksFeeMap[this.name]= OtherBankDetails(this,NoFee)
     }
+
 
     //utility to generate number
     @Throws(AccountFullException::class)
@@ -42,6 +46,11 @@ class Bank constructor(val name: String) {
     fun createAccount(accountDetails: AccountDetails, initialAmount: Double) :String {
         val acc = Account.createAccount(accountDetails, initialAmount, this)
         accountsMap[acc.accountNumber] = acc
+        STM.atomic(Callable {
+            ledger.transform{
+                it + CreateAccountAction(acc.accountNumber,initialAmount)
+            }
+        })
         return acc.accountNumber
     }
 
@@ -62,7 +71,7 @@ class Bank constructor(val name: String) {
         otherBanksFeeMap.putIfAbsent(bank.name,OtherBankDetails(bank,fee))
     }
 
-    fun getForeignBankFee(bankName: String) : InterBankFee?{
+    fun getForeignBankFee(bankName: String) : InterBankFee? {
         return otherBanksFeeMap[bankName]?.fees
     }
 

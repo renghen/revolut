@@ -24,24 +24,29 @@ class AccountTest {
     @Test
     fun `add incorrect amount`() {
         val account = bank["0005"]!!
+        val beforeTransactions = account.bank.ledger.get().count()
 
         assertFailsWith(IllegalArgumentException::class) {
             account.addMoney(-1.0)
         }
+        assertEquals(beforeTransactions, account.bank.ledger.get().size)
     }
 
     @Test
     fun `remove incorrect amount`() {
         val account = bank["0005"]!!
+        val beforeTransactions = account.bank.ledger.get().count()
 
         assertFailsWith(IllegalArgumentException::class) {
             account.removeMoney(-1.0)
         }
+        assertEquals(beforeTransactions, account.bank.ledger.get().size)
     }
 
     @Test
     fun `remove too much`() {
         val account = bank["0005"]!!
+        val beforeTransactions = account.bank.ledger.get().count()
 
         assertFailsWith(NotEnoughMoneyException::class) {
             try {
@@ -50,12 +55,14 @@ class AccountTest {
                 throw e.cause ?: e
             }
         }
+        assertEquals(beforeTransactions, account.bank.ledger.get().size)
     }
 
     @Test
     fun `increment account by 1 for 1000 times concurrently`() {
         val executorService = Executors.newFixedThreadPool(10)
         val account = bank["0000"]!!
+        val beforeTransactions = account.bank.ledger.get().count()
         val futures = (1..1000).map {
             CompletableFuture.supplyAsync(Supplier {
                 account.addMoney(1.toDouble())
@@ -64,6 +71,7 @@ class AccountTest {
 
         CompletableFuture.allOf(*futures).get()
         assertEquals(1100.00, account.balance())
+        assertEquals(beforeTransactions + 1000, account.bank.ledger.get().size)
     }
 
     @Test
@@ -71,6 +79,7 @@ class AccountTest {
         val executorService = Executors.newFixedThreadPool(10)
         val account = bank["0002"]!!
         account.addMoney(1000.toDouble()) // to prevent under flow exception
+        val beforeTransactions = account.bank.ledger.get().count()
         val futures = (1..1000).map {
             CompletableFuture.supplyAsync(Supplier {
                 if (it % 2 == 0) {
@@ -83,6 +92,7 @@ class AccountTest {
 
         CompletableFuture.allOf(*futures).get()
         assertEquals(1100.00, account.balance())
+        assertEquals(beforeTransactions + 1000, account.bank.ledger.get().size)
     }
 
     @Test
@@ -90,20 +100,24 @@ class AccountTest {
         val accountA = bank["0010"]!!
         val accountB = bank["0011"]!!
         val balanceA = accountA.balance()
+        val beforeTransactions = accountA.bank.ledger.get().count()
 
         assertFailsWith(NotEnoughMoneyException::class) {
             accountA.transferTo(accountB, balanceA + 1)
         }
+        assertEquals(beforeTransactions, accountA.bank.ledger.get().size)
     }
 
     @Test
     fun `transfers account between 2 acc but with wrong amount`() {
         val accountA = bank["0010"]!!
         val accountB = bank["0011"]!!
+        val beforeTransactions = accountA.bank.ledger.get().count()
 
         assertFailsWith(IllegalArgumentException::class) {
             accountA.transferTo(accountB, -10.00)
         }
+        assertEquals(beforeTransactions, accountA.bank.ledger.get().size)
     }
 
     @Test
@@ -114,6 +128,7 @@ class AccountTest {
 
         val balanceA = accountA.balance()
         val balanceB = accountB.balance()
+        val beforeTransactions = accountA.bank.ledger.get().count()
         val futures = (1..1000).map {
             CompletableFuture.supplyAsync(Supplier {
                 if (it % 2 == 0) {
@@ -127,6 +142,7 @@ class AccountTest {
         CompletableFuture.allOf(*futures).get()
         assertEquals(balanceA, accountA.balance())
         assertEquals(balanceB, accountB.balance())
+        assertEquals(beforeTransactions + 2000, accountA.bank.ledger.get().size)
     }
 
 
@@ -138,6 +154,7 @@ class AccountTest {
 
         val balanceA = accountA.balance()
         val balanceB = accountB.balance()
+        val beforeTransactions = accountA.bank.ledger.get().count()
         val futures = (1..6000).map {
             CompletableFuture.supplyAsync(Supplier {
                 when (it % 6) {
@@ -162,6 +179,7 @@ class AccountTest {
         CompletableFuture.allOf(*futures).get()
         assertEquals(balanceA, accountA.balance())
         assertEquals(balanceB, accountB.balance())
+        assertEquals(beforeTransactions + 4000 + 4000, accountA.bank.ledger.get().size)
     }
 
     @Test
@@ -174,6 +192,7 @@ class AccountTest {
         val balanceB = accountB.balance()
         val balanceC = accountC.balance()
         accountC.addMoney(2000.00)
+        val beforeTransactions = accountA.bank.ledger.get().count()
         val futures = (1..4000).map {
             CompletableFuture.supplyAsync(Supplier {
                 when (it % 4) {
@@ -189,6 +208,7 @@ class AccountTest {
         assertEquals(balanceA + 1000.00, accountA.balance())
         assertEquals(balanceB + 1000.00, accountB.balance())
         assertEquals(balanceC, accountC.balance())
+        assertEquals(beforeTransactions + 4000 * 2, accountA.bank.ledger.get().size)
     }
 
     private val otherBank = banks["XYZ"]!!
@@ -198,40 +218,47 @@ class AccountTest {
     fun `transfers account between 2 different bank acc but with wrong bank fee`() {
         val accountA = bank["0050"]!!
         val bankDoesNotExist = "notExist"
-
+        val beforeTransactions = accountA.bank.ledger.get().count()
         assertFailsWith(TransferFeeDoesNotExistException::class) {
             accountA.transferToAccountInOtherBank(bankDoesNotExist, otherBankAccountNumber, 10.0)
         }
+        assertEquals(beforeTransactions, accountA.bank.ledger.get().size)
     }
 
     @Test
     fun `transfers account between 2 different bank acc but with wrong bank account`() {
         val accountA = bank["0050"]!!
         val accountB = "9000"
+        val beforeTransactions = accountA.bank.ledger.get().count()
 
         assertFailsWith(AccountNotFoundException::class) {
             accountA.transferToAccountInOtherBank(otherBank.name, accountB, 10.0)
         }
+        assertEquals(beforeTransactions, accountA.bank.ledger.get().size)
     }
 
     @Test
     fun `transfers account between 2 different bank acc but with wrong amount`() {
         val accountA = bank["0050"]!!
         val accountB = "0050"
+        val beforeTransactions = accountA.bank.ledger.get().count()
 
         assertFailsWith(IllegalArgumentException::class) {
             accountA.transferToAccountInOtherBank(otherBank.name, accountB, -10.0)
         }
+        assertEquals(beforeTransactions, accountA.bank.ledger.get().size)
     }
 
     @Test
     fun `transfers account between 2 different bank acc but with insufficient funds`() {
         val accountA = bank["0050"]!!
         val accountB = "0050"
+        val beforeTransactions = accountA.bank.ledger.get().count()
 
         assertFailsWith(NotEnoughMoneyException::class) {
             accountA.transferToAccountInOtherBank(otherBank.name, accountB, 1000.0)
         }
+        assertEquals(beforeTransactions, accountA.bank.ledger.get().size)
     }
 
     @Test
@@ -241,9 +268,13 @@ class AccountTest {
         val balanceA = accountA.balance()
         val amountToTransfer = 9.0
         val fee = BankUtils.calculateInterBankFee(bank.getForeignBankFee(otherBank.name)!!, amountToTransfer)
+        val beforeTransactionsA = bank.ledger.get().count()
+        val beforeTransactionsB = otherBank.ledger.get().count()
 
         accountA.transferToAccountInOtherBank(otherBank.name, accountB, amountToTransfer)
         assertEquals(balanceA - (amountToTransfer + fee), accountA.balance())
+        assertEquals(beforeTransactionsA + 1, bank.ledger.get().size)
+        assertEquals(beforeTransactionsB + 1, otherBank.ledger.get().size)
     }
 
     @Test
@@ -252,10 +283,14 @@ class AccountTest {
         val accountB = "0050"
         val balanceA = accountA.balance()
         val amountToTransfer = 10.0
+        val beforeTransactionsA = bank.ledger.get().count()
+        val beforeTransactionsB = otherBank.ledger.get().count()
         val fee = BankUtils.calculateInterBankFee(otherBank.getForeignBankFee(bank.name)!!, amountToTransfer)
 
         accountA.transferToAccountInOtherBank(bank.name, accountB, amountToTransfer)
         assertEquals(balanceA - (amountToTransfer + fee), accountA.balance())
+        assertEquals(beforeTransactionsA + 1, bank.ledger.get().size)
+        assertEquals(beforeTransactionsB + 1, otherBank.ledger.get().size)
     }
 
     @Test
@@ -266,6 +301,8 @@ class AccountTest {
 
         val balanceA = accountA + 1000.0
         val balanceB = accountB + 1000.0
+        val beforeTransactionsA = bank.ledger.get().count()
+        val beforeTransactionsB = otherBank.ledger.get().count()
         val futures = (1..2000).map {
             CompletableFuture.supplyAsync(Supplier {
                 if (it % 2 == 0) {
@@ -279,6 +316,8 @@ class AccountTest {
         CompletableFuture.allOf(*futures).get()
         assertEquals(balanceA - 1000, accountA.balance())
         assertEquals(balanceB - 500, accountB.balance())
+        assertEquals(beforeTransactionsA + 1000 + 1000, bank.ledger.get().size)
+        assertEquals(beforeTransactionsB + 1000 + 1000, otherBank.ledger.get().size)
     }
 
     @Test
@@ -289,6 +328,8 @@ class AccountTest {
 
         val balanceA = accountA.balance()
         val balanceB = accountB.balance()
+        val beforeTransactionsA = bank.ledger.get().count()
+        val beforeTransactionsB = otherBank.ledger.get().count()
         val futures = (1..4000).map {
             CompletableFuture.supplyAsync(Supplier {
                 when (it % 4) {
@@ -307,6 +348,8 @@ class AccountTest {
         CompletableFuture.allOf(*futures).get()
         assertEquals(balanceA, accountA.balance())
         assertEquals(balanceB, accountB.balance())
+        assertEquals(beforeTransactionsA + 1000 + 1000 + 1000, bank.ledger.get().size)
+        assertEquals(beforeTransactionsB + 1000 + 1000 + 1000, otherBank.ledger.get().size)
     }
 
 }

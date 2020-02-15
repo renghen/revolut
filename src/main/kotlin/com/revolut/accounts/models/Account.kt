@@ -3,6 +3,7 @@ package com.revolut.accounts.models
 import com.revolut.accounts.utils.BankUtils
 import scala.concurrent.stm.*
 import scala.concurrent.stm.japi.STM
+import java.time.LocalDateTime
 import java.util.concurrent.Callable
 
 class NotEnoughMoneyException : Exception("Not enough money")
@@ -10,6 +11,11 @@ class TransferFeeDoesNotExistException : Exception("Transfer fee does not exist"
 class AccountNotFoundException : Exception("Account number not found")
 
 data class AccountDetails(val fullName: String)
+
+sealed class AccountAction
+data class CreateAccountAction(val accountNumber: String, val initialBalance: Double, val dateTime: LocalDateTime = LocalDateTime.now()) : AccountAction()
+data class AddMoneyAction(val accountNumber: String, val amount: Double, val dateTime: LocalDateTime = LocalDateTime.now()) : AccountAction()
+data class RemoveMoneyAction(val accountNumber: String, val amount: Double, val dateTime: LocalDateTime = LocalDateTime.now()) : AccountAction()
 
 class Account private constructor(val accountNumber: String, val accountDetails: AccountDetails,
                                   initialBalance: Double, val bank: Bank) : IAccount {
@@ -33,6 +39,9 @@ class Account private constructor(val accountNumber: String, val accountDetails:
             balance.transform {
                 it + amount
             }
+            this.bank.ledger.transform {
+                it + AddMoneyAction(accountNumber,amount)
+            }
             balance.get()
         })
     }
@@ -55,6 +64,9 @@ class Account private constructor(val accountNumber: String, val accountDetails:
             }
             balance.transform {
                 it - amount
+            }
+            this.bank.ledger.transform {
+                it + RemoveMoneyAction(accountNumber,amount)
             }
             balance.get()
         })

@@ -1,12 +1,14 @@
 package com.revolut.accounts.models
 
+import com.revolut.accounts.utils.BankUtils
 import scala.concurrent.stm.*
 import scala.concurrent.stm.japi.STM
-import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.concurrent.Callable
 
 class NotEnoughMoneyException : Exception("Not enough money")
+class TransferFeeDoesNotExistException : Exception("Transfer fee does not exist")
+class AccountNotFoundException : Exception("Account number not found")
 
 data class AccountDetails(val fullName: String)
 
@@ -26,7 +28,6 @@ class Account private constructor(val accountNumber: String, val accountDetails:
     }
 
     private val balance: Ref.View<Double> = STM.newRef<Double>(initialBalance)
-    //val ledger = STM.newRef<List<AccountAction>>(listOf())
 
     @Throws(IllegalArgumentException::class)
     override fun addMoney(amount: Double): Double {
@@ -78,11 +79,32 @@ class Account private constructor(val accountNumber: String, val accountDetails:
 
     @Throws(IllegalArgumentException::class, NotEnoughMoneyException::class)
     override fun transferTo(other: Account, amount: Double) {
-        STM.atomic(Runnable {
+        STM.atomic {
             removeMoney(amount)
             other.addMoney(amount)
-        })
+        }
     }
+
+    @Throws(IllegalArgumentException::class, NotEnoughMoneyException::class,
+            TransferFeeDoesNotExistException::class, AccountNotFoundException::class)
+    override fun transferToAccountInOtherBank(otherBank: String, otherAccountName: String, amount: Double) {
+        STM.atomic {
+            val transferFee = bank.getForeignBankFee(otherBank)
+            if (transferFee == null) {
+                throw TransferFeeDoesNotExistException()
+            } else {
+                val otherAccount = bank.getForeignAccount(otherBank, otherAccountName)
+                if (otherAccount == null) {
+                    throw AccountNotFoundException()
+                } else {
+                    val transferFeeAmount = BankUtils.calculateInterBankFee(transferFee, amount)
+                    removeMoney(amount + transferFeeAmount)
+                    otherAccount.addMoney(amount)
+                }
+            }
+        }
+    }
+
 
     override fun balance(): Double = balance.get()
 }

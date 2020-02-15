@@ -4,14 +4,29 @@ import org.http4k.server.Http4kServer
 import org.http4k.server.Jetty
 import org.http4k.server.asServer
 import com.revolut.accounts.controllers.*
+import com.revolut.accounts.models.Bank
+import com.revolut.accounts.models.FixedFee
+import com.revolut.accounts.models.PercentageFee
 import com.revolut.accounts.utils.BankUtils
 import org.http4k.routing.routes
+import java.util.concurrent.ConcurrentHashMap
 
-val bank = BankUtils.`concurrent creation of N Accounts`(100, name = "ABC")
+object Main {
+    val banks = ConcurrentHashMap<String, Bank>()
 
-fun bankServer(port: Int): Http4kServer =
-        routes(bankApp(bank), accountApp(bank)).asServer(Jetty(port))
+    init {
+        val bankA = BankUtils.`concurrent creation of N Accounts`(100, name = "ABC")
+        val bankB = BankUtils.`concurrent creation of N Accounts`(100, name = "XYZ")
+        bankA.addForeignBank(bankB, FixedFee(1.0))
+        bankB.addForeignBank(bankA, PercentageFee(5.0))
+        banks[bankA.name] = bankA
+        banks[bankB.name] = bankB
+    }
+
+    fun bankServer(port: Int): Http4kServer =
+            routes(bankApp(banks), accountApp(banks)).asServer(Jetty(port))
+}
 
 fun main(args: Array<String>) {
-    bankServer(9000).start()
+    Main.bankServer(9000).start()
 }
